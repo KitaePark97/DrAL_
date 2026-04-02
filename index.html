@@ -276,15 +276,13 @@ footer strong{color:rgba(255,255,255,.9)}
     <p>이 웹사이트는 Firebase Firestore를 데이터베이스로 사용합니다.<br>
     아래 안내에 따라 Firebase 프로젝트를 만들고, 설정값을 <code>index.html</code>에 붙여넣으세요.</p>
     <div class="config-code">// index.html 하단의 이 부분을 교체하세요:
-const firebaseConfig = {
-  apiKey: "AIzaSyBGR0xDhOwLgiL94yYp6vpYGejLDLTGd8I",
-  authDomain: "dral-e4f2a.firebaseapp.com",
-  databaseURL: "https://dral-e4f2a-default-rtdb.firebaseio.com",
-  projectId: "dral-e4f2a",
-  storageBucket: "dral-e4f2a.firebasestorage.app",
-  messagingSenderId: "173883013986",
-  appId: "1:173883013986:web:3f682659cbb7170ef28a3b",
-  measurementId: "G-9NPCG61CDH"
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };</div>
     <p style="margin-bottom:12px">단계별 설정 방법은 동봉된 <strong>FIREBASE_SETUP.md</strong> 파일을 참고하세요.</p>
     <a class="config-link" href="https://console.firebase.google.com" target="_blank">→ Firebase Console 열기</a>
@@ -598,35 +596,14 @@ const firebaseConfig = {
    ▼▼▼  여기에 Firebase 설정값을 붙여넣으세요  ▼▼▼
    FIREBASE_SETUP.md 파일의 3단계를 참고하세요.
 ══════════════════════════════════════════════════ */
-    // 1. Firebase 설정 (변수명을 FIREBASE_CONFIG로 정확히 맞춤)
-    const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyBGR0xDhOwLgiL94yYp6vpYGejLDLTGd8I",
-      authDomain: "dral-e4f2a.firebaseapp.com",
-      databaseURL: "https://dral-e4f2a-default-rtdb.firebaseio.com",
-      projectId: "dral-e4f2a",
-      storageBucket: "dral-e4f2a.firebasestorage.app",
-      messagingSenderId: "173883013986",
-      appId: "1:173883013986:web:3f682659cbb7170ef28a3b",
-      measurementId: "G-9NPCG61CDH"
-    };
-
-    // 2. 초기화 (v10 compat 모드 사용 - 기존 코드와 가장 잘 맞음)
-    firebase.initializeApp(FIREBASE_CONFIG);
-    const db = firebase.firestore();
-
-    // 3. 전역 변수 설정 (index.html 내의 다른 함수들이 사용할 수 있게 연결)
-    window.db = db;
-    window.IS_CONFIGURED = true;
-
-    console.log("🔥 Firebase connected successfully!");
-
-    // 4. 앱 시작 (Firebase 연결 후 실행)
-    if (typeof init === "function") {
-      init();
-    }
-  </script>
-</body>
-</html>
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
 /* ▲▲▲ 설정값 붙여넣기 끝 ▲▲▲ */
 
 /* ══════════════════════════════════════════════════
