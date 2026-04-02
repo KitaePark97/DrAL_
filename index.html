@@ -213,18 +213,43 @@ nav{
 .news-thumb{cursor:zoom-in}
 .carousel-slide img{cursor:zoom-in}
 /* Hero gallery */
-.hero-gallery{flex-shrink:0;position:relative;display:none}
+.hero-gallery{flex-shrink:0;position:relative;display:none;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.18)}
 .hero-gallery.has-photos{display:block}
-.hero-gallery-track{display:flex;transition:transform .42s ease;border-radius:14px;overflow:hidden}
-.hero-gallery-slide{min-width:100%;flex-shrink:0}
-.hero-gallery-slide img{width:100%;height:100%;object-fit:cover;display:block;border-radius:14px}
-.hero-gallery-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:2;transition:background .2s}
-.hero-gallery-btn:hover{background:rgba(0,0,0,.6)}
-.hero-gallery-btn.prev{left:7px}.hero-gallery-btn.next{right:7px}
-.hero-gallery-dots{display:flex;justify-content:center;gap:5px;position:absolute;bottom:8px;left:50%;transform:translateX(-50%)}
-.hero-gallery-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);border:none;cursor:pointer;padding:0;transition:background .2s}
-.hero-gallery-dot.on{background:#fff}
-@media(max-width:768px){.hero-gallery{max-width:180px}}
+.hero-gallery-inner{overflow:hidden;width:100%;height:100%}
+.hero-gallery-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);height:100%}
+.hero-gallery-slide{min-width:100%;flex-shrink:0;height:100%}
+.hero-gallery-slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.hero-gallery-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .2s;backdrop-filter:blur(6px)}
+.hero-gallery-btn:hover{background:rgba(0,0,0,.7);transform:translateY(-50%) scale(1.08)}
+.hero-gallery-btn.prev{left:9px}.hero-gallery-btn.next{right:9px}
+.hero-gallery-dots{display:flex;justify-content:center;gap:5px;position:absolute;bottom:9px;left:50%;transform:translateX(-50%);z-index:2}
+.hero-gallery-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);border:none;cursor:pointer;padding:0;transition:all .2s}
+.hero-gallery-dot.on{background:#fff;transform:scale(1.2)}
+.hero-gallery-count{position:absolute;top:9px;right:11px;background:rgba(0,0,0,.45);color:#fff;font-size:.68rem;padding:2px 8px;border-radius:10px;z-index:2;backdrop-filter:blur(4px)}
+@media(max-width:768px){.hero-gallery{max-width:200px;max-height:160px}}
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--white)}
+.cal-header{background:var(--green);color:#fff;text-align:center;padding:8px 4px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.cal-cell{min-height:80px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px;position:relative;vertical-align:top;background:var(--white);transition:background .15s}
+.cal-cell:hover{background:var(--bg)}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell.other-month .cal-day{opacity:.3}
+.cal-cell.today{background:var(--green-pale)}
+.cal-cell.today .cal-day{background:var(--green);color:#fff;border-radius:50%}
+.cal-day{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:500;margin-bottom:4px}
+.cal-event{font-size:.66rem;border-radius:3px;padding:1px 5px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.ev-meeting{background:#dcfce7;color:#166534}
+.ev-deadline{background:#fee2e2;color:#991b1b}
+.ev-seminar{background:#fef3c7;color:#92400e}
+.ev-event{background:#dbeafe;color:#1e40af}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.cal-nav h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--green)}
+.cal-nav-btn{background:none;border:1.5px solid var(--border);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.cal-nav-btn:hover{border-color:var(--green);color:var(--green)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:.77rem;color:var(--muted)}
+.cal-leg-dot{width:10px;height:10px;border-radius:50%}
+.ev-form-modal .modal{max-width:460px}
 .news-content-row{display:flex;gap:16px;align-items:flex-start}
 .news-thumb{width:130px;height:110px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
 .news-content-col{flex:1;min-width:0}
@@ -401,6 +426,7 @@ const FIREBASE_CONFIG = {
     <button class="nbtn" onclick="goto('projects',this)">Projects</button>
     <button class="nbtn" onclick="goto('recruiting',this)">Recruiting</button>
     <button class="nbtn" onclick="goto('news',this)">News</button>
+    <button class="nbtn" onclick="goto('calendar',this)">Calendar</button>
   </div>
   <div class="nav-right">
     <div class="save-indicator" id="saveIndicator">✓ Saved</div>
@@ -428,11 +454,14 @@ const FIREBASE_CONFIG = {
   </div>
   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:22px;flex-shrink:0">
     <!-- Hero photo gallery -->
-    <div id="heroGallery" class="hero-gallery" style="width:300px;height:220px">
-      <div id="heroGalleryTrack" class="hero-gallery-track" style="height:100%"></div>
+    <div id="heroGallery" class="hero-gallery" style="width:300px;height:240px">
+      <div class="hero-gallery-inner">
+        <div id="heroGalleryTrack" class="hero-gallery-track"></div>
+      </div>
       <button class="hero-gallery-btn prev" onclick="heroGalleryStep(-1)">&#8249;</button>
       <button class="hero-gallery-btn next" onclick="heroGalleryStep(1)">&#8250;</button>
       <div id="heroGalleryDots" class="hero-gallery-dots"></div>
+      <div id="heroGalleryCount" class="hero-gallery-count" style="display:none"></div>
     </div>
     <div class="hero-stats" id="heroStats"></div>
   </div>
@@ -529,6 +558,33 @@ const FIREBASE_CONFIG = {
     <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
   </div>
   <div class="news-feed" id="newsFeed"></div>
+</div>
+
+<!-- CALENDAR -->
+<div id="page-calendar" class="page">
+  <div class="sh-row sh">
+    <div><h2>Lab Calendar</h2><div class="sh-line"></div><p>Lab meetings, recruiting deadlines, and upcoming events.</p></div>
+  </div>
+  <div class="admin-bar" id="calAdminBar">
+    <span>🟢 Admin Mode — 이벤트 추가/편집/삭제</span>
+    <button class="add-btn" onclick="openEventForm()">+ Add Event</button>
+  </div>
+  <div class="cal-legend">
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#16a34a"></div>Lab Meeting</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#991b1b"></div>Deadline</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#92400e"></div>Seminar</div>
+    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#1e40af"></div>Event</div>
+  </div>
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calNav(-1)">&#8249;</button>
+    <h3 id="calTitle"></h3>
+    <button class="cal-nav-btn" onclick="calNav(1)">&#8250;</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div style="margin-top:32px">
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--green);margin-bottom:16px">Upcoming Events</h3>
+    <div id="calUpcoming" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
 </div>
 
 <footer>
@@ -855,6 +911,42 @@ const FIREBASE_CONFIG = {
   </div>
 </div>
 
+<!-- Event form -->
+<div class="overlay ev-form-modal" id="evFormModal" onclick="if(event.target===this)closeModal('evFormModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('evFormModal')">×</button>
+    <h3 id="evFormTitle">Add Event</h3>
+    <input type="hidden" id="evId">
+    <div class="fg"><label>Title *</label><input id="evTitle" type="text" placeholder="Lab Monthly Meeting"></div>
+    <div class="fr">
+      <div class="fg"><label>Date *</label><input id="evDate" type="date"></div>
+      <div class="fg"><label>Type</label>
+        <select id="evType">
+          <option value="meeting">Lab Meeting</option>
+          <option value="deadline">Deadline</option>
+          <option value="seminar">Seminar</option>
+          <option value="event">Event</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>Time <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="evTime" type="time"></div>
+    <div class="fg"><label>Description</label><textarea id="evDesc" style="min-height:70px"></textarea></div>
+    <div class="fg"><label>Link URL <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="evLink" type="url" placeholder="https://…"></div>
+    <div class="fg"><label>Recurring</label>
+      <select id="evRecur">
+        <option value="none">One-time</option>
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly (same weekday)</option>
+      </select>
+    </div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('evFormModal')">Cancel</button>
+      <button class="btn-save" id="evSaveBtn" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm delete -->
 <div class="overlay" id="confirmModal">
   <div class="modal" style="max-width:360px;text-align:center">
@@ -1044,6 +1136,7 @@ function goto(name, btn) {
   if(name==='projects') rProjects();
   if(name==='recruiting'){ initRecTypeFilters(); rRec(); }
   if(name==='news')     rNews();
+  if(name==='calendar') rCalendar();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1195,7 +1288,7 @@ function rMembers(){
         <button class="ica ica-del"  onclick="confirmDelete('member',${m.id})">🗑</button>
       </div>
       ${m.photoUrl
-        ? `<img class="mc-photo" src="${m.photoUrl}" alt="${m.name}" onerror="this.parentNode.querySelector('.mc-av-fallback').style.display='flex';this.style.display='none'">`
+        ? `<img class="mc-photo" src="${m.photoUrl}" alt="${m.name}" style="cursor:zoom-in" onclick="event.stopPropagation();openLightbox(['${m.photoUrl}'],0)" onerror="this.parentNode.querySelector('.mc-av-fallback').style.display='flex';this.style.display='none'">`
         : ''}
       <div class="mc-av mc-av-fallback" style="${m.photoUrl?'display:none':''}">
         ${ini(m.name)}
@@ -1251,7 +1344,7 @@ function openMemberView(id){
   const m=gm(id);
   const avEl=document.getElementById('mvAv');
   if(m.photoUrl){
-    avEl.innerHTML=`<img src="${m.photoUrl}" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentNode.textContent='${ini(m.name)}'">`;
+    avEl.innerHTML=`<img src="${m.photoUrl}" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:zoom-in" onclick="openLightbox(['${m.photoUrl}'],0)" onerror="this.parentNode.textContent='${ini(m.name)}'">`;
   } else {
     avEl.textContent=ini(m.name);
   }
@@ -1564,6 +1657,7 @@ function getRecTypes(){ return (D&&D.recTypes&&D.recTypes.length)?D.recTypes:[..
 
 function openRecTypeManager(){
   if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  if(!D.events) D.events=[];
   renderRecTypeList();
   openModal('recTypeModal');
 }
@@ -1577,6 +1671,7 @@ function renderRecTypeList(){
 async function addRecType(){
   const v=document.getElementById('newRecTypeInput').value.trim(); if(!v) return;
   if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  if(!D.events) D.events=[];
   if(D.recTypes.includes(v)){alert('Type already exists.');return}
   D.recTypes.push(v);
   document.getElementById('newRecTypeInput').value='';
@@ -1677,7 +1772,7 @@ function rRec(){
       <div class="rc-top">
         <div style="flex:1">
           <div style="display:flex;gap:13px;align-items:flex-start">
-            ${r.photoUrl?`<img src="${r.photoUrl}" style="width:72px;height:60px;object-fit:cover;border-radius:7px;flex-shrink:0;border:1px solid var(--border)" alt="">`:''}
+            ${r.photoUrl?`<img src="${r.photoUrl}" style="width:72px;height:60px;object-fit:cover;border-radius:7px;flex-shrink:0;border:1px solid var(--border);cursor:zoom-in" onclick="openLightbox(['${r.photoUrl}'],0)" alt="">`:''}
             <div>
               <div class="rc-title">${r.title}</div>
               <div class="rc-proj">${proj?proj.title:''}</div>
@@ -1843,7 +1938,8 @@ function initHeroGallery(){
   if(!gallery||!track) return;
   if(!photos.length){ gallery.classList.remove('has-photos'); return; }
   gallery.classList.add('has-photos');
-  track.innerHTML=photos.map(p=>`<div class="hero-gallery-slide"><img src="${p}" alt="Lab" loading="lazy" onclick="openLightbox(${JSON.stringify(photos)},${photos.indexOf(p)})"></div>`).join('');
+  const photosCopy=[...photos];
+  track.innerHTML=photosCopy.map((p,i)=>`<div class="hero-gallery-slide"><img src="${p}" alt="Lab" loading="lazy" onclick="openLightbox(${JSON.stringify(photosCopy).replace(/"/g,"'")},${i})"></div>`).join('');
   dots.innerHTML=photos.map((_,i)=>`<button class="hero-gallery-dot${i===0?' on':''}" onclick="heroGalleryGo(${i})"></button>`).join('');
   _heroGalleryIdx=0;
   clearInterval(_heroGalleryTimer);
@@ -1857,6 +1953,8 @@ function heroGalleryGo(idx){
   _heroGalleryIdx=(idx+photos.length)%photos.length;
   track.style.transform=`translateX(-${_heroGalleryIdx*100}%)`;
   document.querySelectorAll('.hero-gallery-dot').forEach((d,i)=>d.classList.toggle('on',i===_heroGalleryIdx));
+  const cnt=document.getElementById('heroGalleryCount');
+  if(cnt) { cnt.textContent=photos.length>1?`${_heroGalleryIdx+1}/${photos.length}`:''; cnt.style.display=photos.length>1?'block':'none'; }
 }
 function heroGalleryStep(dir){ heroGalleryGo(_heroGalleryIdx+dir); }
 
@@ -2020,7 +2118,7 @@ async function saveNews(){
    DELETE CONFIRM
 ══════════════════════════════════════════════════ */
 function confirmDelete(type,id){
-  const labels={member:'member',project:'project',rec:'posting',news:'news item'};
+  const labels={member:'member',project:'project',rec:'posting',news:'news item',event:'event'};
   document.getElementById('confirmMsg').textContent=`Delete this ${labels[type]}?`;
   document.getElementById('confirmOk').onclick=async()=>{
     if(type==='member'){
@@ -2032,6 +2130,8 @@ function confirmDelete(type,id){
       D.recruiting=D.recruiting.filter(r=>r.id!==id);
     } else if(type==='news'){
       D.news=D.news.filter(n=>n.id!==id);
+    } else if(type==='event'){
+      D.events=(D.events||[]).filter(e=>e.id!==id&&e.parentId!==id);
     }
     await saveToFirebase();
     closeModal('confirmModal');
@@ -2048,6 +2148,7 @@ function renderAll(){
   if(!D.projectTags) D.projectTags=window.SEED_DATA.projectTags||["Health","Mobility","Equity","Urban Design","Aging"];
   if(!D.memberRoles) D.memberRoles=[...DEFAULT_MEMBER_ROLES];
   if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  if(!D.events) D.events=[];
   // Apply saved hero colors + photo
   const s=D.heroBgSettings||{};
   applyHeroTextColor(s.textColor||'#ffffff');
@@ -2059,6 +2160,7 @@ function renderAll(){
   if(active==='recruiting'){ initRecTypeFilters(); rRec(); }
   if(active==='news') rNews();
   if(active==='about') renderAbout();
+  if(active==='calendar') rCalendar();
 }
 
 /* ══════════════════════════════════════════════════
@@ -2221,6 +2323,154 @@ async function resetAccentColor(){
 
 
 /* ══════════════════════════════════════════════════
+   CALENDAR
+══════════════════════════════════════════════════ */
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+const EV_COLORS={meeting:'ev-meeting',deadline:'ev-deadline',seminar:'ev-seminar',event:'ev-event'};
+const EV_LABELS={meeting:'Lab Meeting',deadline:'Deadline',seminar:'Seminar',event:'Event'};
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function getCalEvents(){
+  if(!D) return [];
+  const evs=[...(D.events||[])];
+  // Auto-inject recruiting deadlines
+  (D.recruiting||[]).filter(r=>r.deadline&&r.status==='Open').forEach(r=>{
+    evs.push({id:'rec-'+r.id,title:'Deadline: '+r.title,date:r.deadline,type:'deadline',desc:r.desc,autoGen:true});
+  });
+  return evs;
+}
+
+function calNav(dir){ calMonth+=dir; if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;} rCalendar(); }
+
+function rCalendar(){
+  if(!D) return;
+  const title=document.getElementById('calTitle');
+  if(title) title.textContent=MONTHS[calMonth]+' '+calYear;
+  const today=new Date(); const todayStr=today.toISOString().slice(0,10);
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+  const evs=getCalEvents();
+  const evByDate={};
+  evs.forEach(e=>{ const d=e.date; if(!evByDate[d])evByDate[d]=[]; evByDate[d].push(e); });
+
+  const grid=document.getElementById('calGrid'); if(!grid) return;
+  let html=DAYS.map(d=>`<div class="cal-header">${d}</div>`).join('');
+
+  // Prev month cells
+  for(let i=firstDay-1;i>=0;i--){
+    html+=`<div class="cal-cell other-month"><div class="cal-day">${daysInPrev-i}</div></div>`;
+  }
+  // This month
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===todayStr;
+    const dayEvs=evByDate[ds]||[];
+    html+=`<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-day">${d}</div>
+      ${dayEvs.slice(0,3).map(e=>`<div class="cal-event ${EV_COLORS[e.type]||'ev-event'}" onclick="openEventDetail(${JSON.stringify(e).replace(/"/g,"'").replace(/
+/g,' ')})" title="${e.title}">${e.title}</div>`).join('')}
+      ${dayEvs.length>3?`<div style="font-size:.62rem;color:var(--muted)">+${dayEvs.length-3} more</div>`:''}
+    </div>`;
+  }
+  // Next month cells
+  const total=firstDay+daysInMonth; const remaining=(7-total%7)%7;
+  for(let d=1;d<=remaining;d++) html+=`<div class="cal-cell other-month"><div class="cal-day">${d}</div></div>`;
+  grid.innerHTML=html;
+
+  // Upcoming list
+  const now=new Date(); now.setHours(0,0,0,0);
+  const upcoming=evs.filter(e=>new Date(e.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
+  const upEl=document.getElementById('calUpcoming'); if(!upEl) return;
+  if(!upcoming.length){upEl.innerHTML='<div class="empty" style="padding:32px 0"><div class="empty-icon">📅</div><p>No upcoming events.</p></div>';return;}
+  upEl.innerHTML=upcoming.map(e=>`
+    <div style="display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 18px;cursor:pointer;transition:box-shadow .2s" onclick="openEventDetail(${JSON.stringify(e).replace(/"/g,"'").replace(/
+/g,' ')})" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
+      <div style="text-align:center;min-width:48px">
+        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase">${MONTHS[parseInt(e.date.slice(5,7))-1].slice(0,3)}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--green);line-height:1">${parseInt(e.date.slice(8,10))}</div>
+      </div>
+      <div style="width:3px;height:36px;border-radius:2px;background:${e.type==='meeting'?'#16a34a':e.type==='deadline'?'#991b1b':e.type==='seminar'?'#92400e':'#1e40af'}"></div>
+      <div style="flex:1">
+        <div style="font-weight:500;font-size:.9rem">${e.title}</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${EV_LABELS[e.type]||e.type}${e.time?' · '+e.time:''}</div>
+      </div>
+      ${isAdmin&&!e.autoGen?`<button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${e.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();confirmDelete('event','${e.id}')">🗑</button>`:''}
+    </div>`).join('');
+}
+
+function openEventDetail(ev){
+  if(typeof ev==='string') try{ev=JSON.parse(ev.replace(/'/g,'"'));}catch(e){}
+  const d=new Date(ev.date+'T00:00:00');
+  const dateStr=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('confirmMsg').textContent=ev.title;
+  document.getElementById('confirmSub').innerHTML=`<b>${dateStr}</b>${ev.time?' at '+ev.time:''}<br><span style="color:var(--muted)">${EV_LABELS[ev.type]||ev.type}</span>${ev.desc?'<br><br>'+ev.desc:''}${ev.link?'<br><br><a href="'+ev.link+'" target="_blank" style="color:#2563eb">🔗 More info</a>':''}`;
+  document.getElementById('confirmOk').style.display='none';
+  document.getElementById('confirmModal').classList.add('open');
+  // Restore ok button when closed
+  document.getElementById('confirmModal').addEventListener('click',()=>{document.getElementById('confirmOk').style.display='block';},{once:true});
+}
+
+function openEventForm(id=null){
+  document.getElementById('evFormTitle').textContent=id?'Edit Event':'Add Event';
+  if(id&&typeof id==='string'&&id!=='null'){
+    const ev=(D.events||[]).find(e=>e.id===id);
+    if(ev){
+      document.getElementById('evId').value=ev.id;
+      document.getElementById('evTitle').value=ev.title;
+      document.getElementById('evDate').value=ev.date;
+      document.getElementById('evType').value=ev.type;
+      document.getElementById('evTime').value=ev.time||'';
+      document.getElementById('evDesc').value=ev.desc||'';
+      document.getElementById('evLink').value=ev.link||'';
+      document.getElementById('evRecur').value=ev.recur||'none';
+    }
+  } else {
+    ['evId','evTitle','evTime','evDesc','evLink'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('evDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('evType').value='meeting';
+    document.getElementById('evRecur').value='none';
+  }
+  openModal('evFormModal');
+}
+
+async function saveEvent(){
+  const title=document.getElementById('evTitle').value.trim();
+  const date=document.getElementById('evDate').value;
+  if(!title||!date){alert('Title and Date are required.');return}
+  const btn=document.getElementById('evSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  if(!D.events) D.events=[];
+  const id=document.getElementById('evId').value||('ev-'+Date.now());
+  const recur=document.getElementById('evRecur').value;
+  const base={id,title,date,type:document.getElementById('evType').value,
+    time:document.getElementById('evTime').value||null,
+    desc:document.getElementById('evDesc').value.trim()||null,
+    link:document.getElementById('evLink').value.trim()||null,
+    recur};
+  // Generate recurring events
+  const toAdd=[base];
+  if(recur!=='none'){
+    const start=new Date(date+'T00:00:00');
+    for(let i=1;i<=24;i++){
+      const next=new Date(start);
+      if(recur==='weekly') next.setDate(next.getDate()+7*i);
+      else if(recur==='biweekly') next.setDate(next.getDate()+14*i);
+      else if(recur==='monthly'){ next.setMonth(next.getMonth()+i); }
+      if(next.getFullYear()>calYear+2) break;
+      toAdd.push({...base,id:id+'-r'+i,date:next.toISOString().slice(0,10),recur:'none',parentId:id});
+    }
+  }
+  // Remove old recurring instances
+  D.events=D.events.filter(e=>e.parentId!==id&&e.id!==id);
+  D.events.push(...toAdd);
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save Event';
+  closeModal('evFormModal'); rCalendar();
+}
+
+/* ══════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════ */
 async function init(){
@@ -2238,6 +2488,7 @@ async function init(){
     renderAll();
     initHeroBg();
     initRecTypeFilters();
+    rCalendar();
     startRealtimeListener(); // live updates for all visitors
   } finally {
     loadScreen.classList.add('hide');
