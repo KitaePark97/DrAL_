@@ -4,521 +4,937 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DrAL Lab — Design Research for Active Living @ Texas A&M</title>
-<meta name="description" content="Design Research for Active Living Lab at Texas A&M University. Research on built environment, physical activity, and community health.">
+<meta name="description" content="Design Research for Active Living Lab at Texas A&M University.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+
+<!-- ═══ FIREBASE SDK ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
 <style>
-/* ═══════════════════════════════════════════════════════════
-   TOKENS
-═══════════════════════════════════════════════════════════ */
-:root {
-  --bg:         #f5f2ec;
-  --white:      #ffffff;
-  --green:      #2d4a3e;
-  --green-l:    #4a7c68;
-  --green-pale: #e8f4f0;
-  --gold:       #b8873f;
-  --gold-pale:  #fdf3e3;
-  --blue-pale:  #eff6ff;
-  --purple-pale:#f5f3ff;
-  --red:        #c0392b;
-  --text:       #1a1a1a;
-  --muted:      #6b7280;
-  --border:     #e0dbd2;
+/* ═══════════════════════════ TOKENS ═══════════════════════════ */
+:root{
+  --bg:#f5f2ec;--white:#fff;--green:#2d4a3e;--green-l:#4a7c68;
+  --green-pale:#e8f4f0;--gold:#b8873f;--gold-pale:#fdf3e3;
+  --blue-pale:#eff6ff;--purple-pale:#f5f3ff;
+  --red:#c0392b;--red-pale:#fef2f2;
+  --text:#1a1a1a;--muted:#6b7280;--border:#e0dbd2;
+  --admin:#059669;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-a { color: inherit; text-decoration: none; }
-button { font-family: inherit; cursor: pointer; }
-img { display: block; max-width: 100%; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
 
-/* ═══════════════════════════════════════════════════════════
-   NAV
-═══════════════════════════════════════════════════════════ */
-nav {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--green); height: 62px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 52px;
-  box-shadow: 0 2px 20px rgba(0,0,0,.2);
+/* ═══════════════════════════ LOADING ═══════════════════════════ */
+#loadScreen{
+  position:fixed;inset:0;background:var(--green);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:16px;
+  transition:opacity .5s;
 }
-.nav-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.45rem; font-weight: 600; color: #fff; letter-spacing: .02em;
-}
-.nav-brand span { color: #a5d4c4; }
-.nav-links { display: flex; gap: 4px; }
-.nbtn {
-  background: none; border: none; color: rgba(255,255,255,.7);
-  font-size: .85rem; padding: 8px 17px; border-radius: 6px; transition: all .2s;
-}
-.nbtn:hover, .nbtn.on { background: rgba(255,255,255,.14); color: #fff; }
+#loadScreen.hide{opacity:0;pointer-events:none}
+.loader{width:40px;height:40px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadMsg{font-size:.9rem;opacity:.75}
 
-/* ═══════════════════════════════════════════════════════════
-   HERO
-═══════════════════════════════════════════════════════════ */
-.hero {
-  background: linear-gradient(138deg, var(--green) 0%, #3d6b5a 50%, #4a7c68 100%);
-  color: #fff;
-  padding: 80px 52px 72px;
-  display: flex; align-items: center; justify-content: space-between; gap: 48px;
+/* ═══════════════════════════ FIREBASE CONFIG NOTICE ═══════════════════════════ */
+#configNotice{
+  display:none;position:fixed;inset:0;background:var(--green);z-index:998;
+  align-items:center;justify-content:center;
 }
-.hero-text h1 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 3.4rem; font-weight: 600; line-height: 1.1;
-}
-.hero-text h1 em { font-style: italic; color: #a5d4c4; }
-.hero-text p {
-  margin-top: 16px; max-width: 460px;
-  font-size: .96rem; opacity: .85; line-height: 1.75;
-}
-.hero-cta { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
-.btn-primary {
-  background: var(--gold); color: #fff; border: none;
-  padding: 11px 26px; border-radius: 8px; font-size: .88rem; font-weight: 500;
-  transition: background .2s;
-}
-.btn-primary:hover { background: #9a6f30; }
-.btn-ghost {
-  background: none; color: rgba(255,255,255,.85);
-  border: 1.5px solid rgba(255,255,255,.35);
-  padding: 11px 24px; border-radius: 8px; font-size: .88rem;
-  transition: all .2s;
-}
-.btn-ghost:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); }
-.hero-stats { display: flex; gap: 44px; flex-shrink: 0; }
-.stat { text-align: center; }
-.stat-n { font-family: 'Cormorant Garamond', serif; font-size: 2.7rem; font-weight: 600; color: #a5d4c4; line-height: 1; }
-.stat-l { font-size: .7rem; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-top: 5px; }
+#configNotice.show{display:flex}
+.config-box{background:#fff;border-radius:16px;padding:48px 40px;max-width:560px;width:94%}
+.config-box h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--green);margin-bottom:12px}
+.config-box p{font-size:.88rem;color:var(--muted);line-height:1.7;margin-bottom:16px}
+.config-code{background:#1e1e2e;color:#cdd6f4;border-radius:8px;padding:16px;font-size:.78rem;font-family:monospace;line-height:1.6;margin-bottom:16px;white-space:pre-wrap}
+.config-link{display:inline-block;background:var(--green);color:#fff;padding:10px 22px;border-radius:8px;font-size:.87rem;font-weight:500}
 
-/* ═══════════════════════════════════════════════════════════
-   PAGE LAYOUT
-═══════════════════════════════════════════════════════════ */
-.page { display: none; max-width: 1200px; margin: 0 auto; padding: 52px 48px; }
-.page.on { display: block; }
+/* ═══════════════════════════ NAV ═══════════════════════════ */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:var(--green);height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;box-shadow:0 2px 20px rgba(0,0,0,.22);
+}
+.nav-brand{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;color:#fff;letter-spacing:.02em}
+.nav-brand span{color:#a5d4c4}
+.nav-center{display:flex;gap:4px}
+.nbtn{background:none;border:none;color:rgba(255,255,255,.7);font-size:.85rem;padding:8px 17px;border-radius:6px;transition:all .2s}
+.nbtn:hover,.nbtn.on{background:rgba(255,255,255,.14);color:#fff}
+.nav-right{display:flex;align-items:center;gap:10px}
+.admin-btn{background:none;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.6);padding:5px 13px;border-radius:20px;font-size:.75rem;transition:all .2s;display:flex;align-items:center;gap:5px}
+.admin-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.admin-btn.on{background:var(--admin);border-color:var(--admin);color:#fff}
+.save-indicator{display:none;font-size:.72rem;color:#6ee7b7;align-items:center;gap:5px}
+.save-indicator.show{display:flex}
 
-/* ═══════════════════════════════════════════════════════════
-   SECTION HEADER
-═══════════════════════════════════════════════════════════ */
-.sh { margin-bottom: 36px; }
-.sh h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 600; color: var(--green); }
-.sh-line { width: 46px; height: 3px; background: var(--gold); border-radius: 2px; margin: 11px 0; }
-.sh p { font-size: .88rem; color: var(--muted); }
+/* ═══════════════════════════ HERO ═══════════════════════════ */
+.hero{background:linear-gradient(138deg,var(--green) 0%,#3d6b5a 50%,#4a7c68 100%);color:#fff;padding:80px 52px 72px;display:flex;align-items:center;justify-content:space-between;gap:48px}
+.hero-text h1{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:600;line-height:1.1}
+.hero-text h1 em{font-style:italic;color:#a5d4c4}
+.hero-text p{margin-top:16px;max-width:460px;font-size:.96rem;opacity:.85;line-height:1.75}
+.hero-cta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:#fff;border:none;padding:11px 26px;border-radius:8px;font-size:.88rem;font-weight:500;transition:background .2s}
+.btn-gold:hover{background:#9a6f30}
+.btn-ghost{background:none;color:rgba(255,255,255,.85);border:1.5px solid rgba(255,255,255,.35);padding:11px 24px;border-radius:8px;font-size:.88rem;transition:all .2s}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.hero-stats{display:flex;gap:44px;flex-shrink:0}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:2.7rem;font-weight:600;color:#a5d4c4;line-height:1}
+.stat-l{font-size:.7rem;opacity:.7;text-transform:uppercase;letter-spacing:.09em;margin-top:5px}
 
-/* ═══════════════════════════════════════════════════════════
-   FILTER BAR
-═══════════════════════════════════════════════════════════ */
-.fbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
-.fbar input {
-  flex: 1; min-width: 200px; padding: 9px 15px;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  font-family: inherit; font-size: .85rem; background: var(--white);
-  outline: none; transition: border-color .2s; color: var(--text);
-}
-.fbar input:focus { border-color: var(--green); }
-.fb {
-  padding: 8px 19px; border-radius: 20px;
-  border: 1.5px solid var(--border); background: var(--white);
-  font-size: .78rem; color: var(--text); transition: all .2s;
-}
-.fb:hover, .fb.on { background: var(--green); border-color: var(--green); color: #fff; }
+/* ═══════════════════════════ PAGE ═══════════════════════════ */
+.page{display:none;max-width:1200px;margin:0 auto;padding:52px 48px}
+.page.on{display:block}
+.sh{margin-bottom:36px}
+.sh h2{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:600;color:var(--green)}
+.sh-line{width:46px;height:3px;background:var(--gold);border-radius:2px;margin:11px 0}
+.sh p{font-size:.88rem;color:var(--muted)}
+.sh-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
-/* ═══════════════════════════════════════════════════════════
-   MEMBER GRID
-═══════════════════════════════════════════════════════════ */
-.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(192px, 1fr)); gap: 18px; }
-.mc {
-  background: var(--white); border-radius: 13px;
-  border: 1px solid var(--border); overflow: hidden;
-  cursor: pointer; transition: transform .25s, box-shadow .25s;
-}
-.mc:hover { transform: translateY(-5px); box-shadow: 0 14px 36px rgba(0,0,0,.1); }
-.mc-av {
-  height: 112px;
-  background: linear-gradient(135deg, var(--green-pale) 0%, var(--gold-pale) 100%);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 600; color: var(--green);
-}
-.mc-body { padding: 15px; }
-.mc-name { font-weight: 500; font-size: .92rem; }
-.mc-email { font-size: .7rem; color: var(--muted); margin-top: 3px; }
-.mc-adv { font-size: .68rem; color: var(--green-l); margin-top: 4px; }
-.rbadge {
-  display: inline-block; margin-top: 9px;
-  padding: 2px 11px; border-radius: 10px; font-size: .66rem; font-weight: 500;
-}
-.rb-f { background: var(--gold-pale);   color: var(--gold); }
-.rb-p { background: var(--green-pale);  color: var(--green); }
-.rb-d { background: var(--blue-pale);   color: #1e40af; }
-.rb-r { background: var(--purple-pale); color: #5b21b6; }
-.slink {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: .68rem; color: #2563eb; margin-top: 6px;
-}
-.slink:hover { text-decoration: underline; }
+/* ═══════════════════════════ FILTER BAR ═══════════════════════════ */
+.fbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.fbar input{flex:1;min-width:200px;padding:9px 15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;background:var(--white);outline:none;transition:border-color .2s;color:var(--text)}
+.fbar input:focus{border-color:var(--green)}
+.fb{padding:8px 19px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;color:var(--text);transition:all .2s}
+.fb:hover,.fb.on{background:var(--green);border-color:var(--green);color:#fff}
 
-/* ═══════════════════════════════════════════════════════════
-   PROJECT GRID
-═══════════════════════════════════════════════════════════ */
-.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(348px, 1fr)); gap: 22px; }
-.pc {
-  background: var(--white); border-radius: 14px;
-  border: 1px solid var(--border); overflow: hidden;
-  transition: transform .25s, box-shadow .25s;
-  display: flex; flex-direction: column;
-}
-.pc:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(0,0,0,.1); }
-.pc-head { padding: 24px 24px 0; flex: 1; }
-.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 11px; }
-.tag {
-  padding: 2px 12px; border-radius: 10px;
-  font-size: .67rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
-}
-.t-Health    { background: #dcfce7; color: #166534; }
-.t-Mobility  { background: #dbeafe; color: #1e40af; }
-.t-Equity    { background: #fee2e2; color: #991b1b; }
-.t-UrbanDesign { background: #ede9fe; color: #5b21b6; }
-.t-Aging     { background: #fef3c7; color: #92400e; }
-.pc-title { font-family: 'Cormorant Garamond', serif; font-size: 1.28rem; font-weight: 600; line-height: 1.3; }
-.pc-desc { margin: 10px 0 18px; font-size: .82rem; color: var(--muted); line-height: 1.65; }
-.pc-body { padding: 0 24px 18px; }
-.team-lbl { font-size: .67rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
-.chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.chip {
-  display: flex; align-items: center; gap: 5px;
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 20px; padding: 3px 10px 3px 3px; font-size: .72rem;
-}
-.chip-av {
-  width: 20px; height: 20px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--green-pale), var(--gold-pale));
-  display: flex; align-items: center; justify-content: center;
-  font-size: .55rem; color: var(--green); font-weight: 700;
-}
-.pc-foot {
-  border-top: 1px solid var(--border); padding: 13px 24px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.sdot { display: flex; align-items: center; gap: 7px; font-size: .75rem; color: var(--muted); }
-.dot  { width: 7px; height: 7px; border-radius: 50%; }
-.dot-a { background: #16a34a; }
-.dot-r { background: var(--gold); }
-.drive-btn {
-  display: flex; align-items: center; gap: 5px;
-  font-size: .72rem; background: none;
-  border: 1px solid var(--border); border-radius: 16px; padding: 4px 13px;
-  color: var(--muted); text-decoration: none; transition: all .2s;
-}
-.drive-btn:hover { border-color: #4285f4; color: #4285f4; }
-.drive-btn.na { opacity: .38; pointer-events: none; }
+/* ═══════════════════════════ ADMIN BAR ═══════════════════════════ */
+.admin-bar{display:none;background:linear-gradient(90deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;border-radius:10px;padding:12px 18px;margin-bottom:24px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.83rem;color:#065f46}
+.admin-bar.show{display:flex}
+.add-btn{background:var(--admin);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:5px;transition:background .2s}
+.add-btn:hover{background:#047857}
 
-/* ═══════════════════════════════════════════════════════════
-   RECRUITING
-═══════════════════════════════════════════════════════════ */
-.rec-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px; }
-.rgrid { display: flex; flex-direction: column; gap: 15px; }
-.rc {
-  background: var(--white); border-radius: 13px;
-  border: 1px solid var(--border); border-left: 4px solid var(--green);
-  padding: 24px; transition: box-shadow .2s;
-}
-.rc:hover { box-shadow: 0 8px 28px rgba(0,0,0,.09); }
-.rc.urg { border-left-color: var(--red); }
-.rc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
-.rc-title { font-family: 'Cormorant Garamond', serif; font-size: 1.18rem; font-weight: 600; }
-.rc-proj  { font-size: .78rem; color: var(--muted); margin-top: 3px; }
-.rc-badges { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
-.rbg { padding: 3px 12px; border-radius: 10px; font-size: .7rem; font-weight: 500; }
-.rbg-t { background: var(--green-pale); color: var(--green); }
-.rbg-u { background: #fef2f2; color: var(--red); }
-.rc-desc { margin-top: 13px; font-size: .83rem; color: var(--muted); line-height: 1.65; }
-.rc-foot {
-  margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-}
-.rc-meta { display: flex; flex-wrap: wrap; gap: 18px; }
-.rc-meta span { font-size: .77rem; color: var(--muted); }
-.apply {
-  background: var(--green); color: #fff; border: none;
-  padding: 9px 22px; border-radius: 8px; font-size: .79rem; font-weight: 500;
-  text-decoration: none; display: inline-block; transition: background .2s;
-}
-.apply:hover { background: var(--green-l); }
+/* ═══════════════════════════ MEMBER GRID ═══════════════════════════ */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:18px}
+.mc{background:var(--white);border-radius:13px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s;position:relative}
+.mc:hover{transform:translateY(-5px);box-shadow:0 14px 36px rgba(0,0,0,.1)}
+.mc-av{height:112px;background:linear-gradient(135deg,var(--green-pale),var(--gold-pale));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:600;color:var(--green)}
+.mc-body{padding:15px}
+.mc-name{font-weight:500;font-size:.92rem}
+.mc-email{font-size:.7rem;color:var(--muted);margin-top:3px}
+.mc-adv{font-size:.68rem;color:var(--green-l);margin-top:4px}
+.rbadge{display:inline-block;margin-top:9px;padding:2px 11px;border-radius:10px;font-size:.66rem;font-weight:500}
+.rb-f{background:var(--gold-pale);color:var(--gold)}
+.rb-p{background:var(--green-pale);color:var(--green)}
+.rb-d{background:var(--blue-pale);color:#1e40af}
+.rb-r{background:var(--purple-pale);color:#5b21b6}
+.slink{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;color:#2563eb;margin-top:6px}
+.slink:hover{text-decoration:underline}
+.card-admin{display:none;position:absolute;top:8px;right:8px;gap:4px}
+.admin-mode .card-admin{display:flex}
+.ica{width:28px;height:28px;border-radius:6px;border:none;font-size:.75rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.ica-edit{background:rgba(255,255,255,.9);color:var(--green)}
+.ica-del{background:rgba(255,255,255,.9);color:var(--red)}
+.ica:hover{transform:scale(1.1)}
 
-/* ═══════════════════════════════════════════════════════════
-   MEMBER MODAL
-═══════════════════════════════════════════════════════════ */
-.overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.48); z-index: 200;
-  align-items: center; justify-content: center;
-}
-.overlay.open { display: flex; }
-.modal {
-  background: var(--white); border-radius: 18px;
-  max-width: 500px; width: 92%; padding: 40px;
-  position: relative; max-height: 88vh; overflow-y: auto;
-}
-.modal-x {
-  position: absolute; top: 16px; right: 20px;
-  background: none; border: none; font-size: 1.6rem; color: var(--muted);
-}
-.modal-x:hover { color: var(--text); }
-.m-av {
-  width: 74px; height: 74px; border-radius: 50%; margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--green-pale), var(--gold-pale));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600; color: var(--green);
-}
-.modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; }
-.m-meta { font-size: .84rem; color: var(--muted); margin-top: 5px; }
-.m-bio  { font-size: .84rem; color: var(--text); line-height: 1.65; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-.m-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.mlink {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: .79rem; padding: 6px 14px; border-radius: 20px;
-  border: 1px solid var(--border); color: var(--muted); transition: all .2s;
-}
-.mlink:hover { border-color: var(--green); color: var(--green); }
-.mlink.sc { border-color: #2563eb; color: #2563eb; }
-.mlink.sc:hover { background: #2563eb; color: #fff; }
-.m-projs { margin-top: 22px; }
-.m-projs h4 { font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 9px; }
-.pp {
-  display: inline-block; margin: 3px 3px 3px 0;
-  padding: 4px 13px; border-radius: 20px;
-  background: var(--green-pale); color: var(--green); font-size: .77rem;
-}
+/* ═══════════════════════════ PROJECT GRID ═══════════════════════════ */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(348px,1fr));gap:22px}
+.pc{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;transition:transform .25s,box-shadow .25s;display:flex;flex-direction:column}
+.pc:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.1)}
+.pc-head{padding:24px 24px 0;flex:1}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:11px}
+.tag{padding:2px 12px;border-radius:10px;font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.t-Health{background:#dcfce7;color:#166534}.t-Mobility{background:#dbeafe;color:#1e40af}
+.t-Equity{background:#fee2e2;color:#991b1b}.t-UrbanDesign{background:#ede9fe;color:#5b21b6}.t-Aging{background:#fef3c7;color:#92400e}
+.pc-title{font-family:'Cormorant Garamond',serif;font-size:1.28rem;font-weight:600;line-height:1.3}
+.pc-desc{margin:10px 0 18px;font-size:.82rem;color:var(--muted);line-height:1.65}
+.pc-body{padding:0 24px 18px}
+.team-lbl{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px 3px 3px;font-size:.72rem}
+.chip-av{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--green-pale),var(--gold-pale));display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--green);font-weight:700}
+.chip-rm{background:none;border:none;color:var(--red);font-size:.75rem;margin-left:2px;display:none;padding:0;cursor:pointer}
+.admin-mode .chip-rm{display:inline}
+.pc-foot{border-top:1px solid var(--border);padding:13px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.sdot{display:flex;align-items:center;gap:7px;font-size:.75rem;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%}
+.dot-a{background:#16a34a}.dot-r{background:var(--gold)}
+.drive-btn{display:flex;align-items:center;gap:5px;font-size:.72rem;background:none;border:1px solid var(--border);border-radius:16px;padding:4px 13px;color:var(--muted);text-decoration:none;transition:all .2s}
+.drive-btn:hover:not(.na){border-color:#4285f4;color:#4285f4}
+.drive-btn.na{opacity:.35;pointer-events:none}
 
-/* ═══════════════════════════════════════════════════════════
-   EMPTY STATE
-═══════════════════════════════════════════════════════════ */
-.empty { text-align: center; padding: 64px 0; color: var(--muted); }
-.empty-icon { font-size: 2.6rem; margin-bottom: 12px; }
+/* ═══════════════════════════ RECRUITING ═══════════════════════════ */
+.rgrid{display:flex;flex-direction:column;gap:15px}
+.rc{background:var(--white);border-radius:13px;border:1px solid var(--border);border-left:4px solid var(--green);padding:24px;transition:box-shadow .2s;position:relative}
+.rc:hover{box-shadow:0 8px 28px rgba(0,0,0,.09)}
+.rc.urg{border-left-color:var(--red)}
+.rc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+.rc-title{font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-weight:600}
+.rc-proj{font-size:.78rem;color:var(--muted);margin-top:3px}
+.rc-badges{display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
+.rbg{padding:3px 12px;border-radius:10px;font-size:.7rem;font-weight:500}
+.rbg-t{background:var(--green-pale);color:var(--green)}.rbg-u{background:var(--red-pale);color:var(--red)}
+.rc-desc{margin-top:13px;font-size:.83rem;color:var(--muted);line-height:1.65}
+.rc-foot{margin-top:15px;padding-top:13px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.rc-meta{display:flex;flex-wrap:wrap;gap:18px}
+.rc-meta span{font-size:.77rem;color:var(--muted)}
+.apply{background:var(--green);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-size:.79rem;font-weight:500;text-decoration:none;display:inline-block;transition:background .2s}
+.apply:hover{background:var(--green-l)}
 
-/* ═══════════════════════════════════════════════════════════
-   FOOTER
-═══════════════════════════════════════════════════════════ */
-footer {
-  background: var(--green); color: rgba(255,255,255,.6);
-  padding: 36px 52px; font-size: .8rem; text-align: center; margin-top: 80px;
-}
-footer strong { color: rgba(255,255,255,.9); }
+/* ═══════════════════════════ NEWS ═══════════════════════════ */
+.news-feed{display:flex;flex-direction:column;gap:20px}
+.news-card{background:var(--white);border-radius:13px;border:1px solid var(--border);padding:28px;position:relative;transition:box-shadow .2s}
+.news-card:hover{box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.news-meta{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.news-cat{padding:3px 12px;border-radius:10px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.cat-Publication{background:#dbeafe;color:#1e40af}.cat-Award{background:#fef3c7;color:#92400e}
+.cat-Event{background:#dcfce7;color:#166534}.cat-Announcement{background:var(--purple-pale);color:#5b21b6}.cat-Other{background:#f1f5f9;color:#475569}
+.news-date{font-size:.78rem;color:var(--muted)}
+.news-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;margin-bottom:10px}
+.news-body{font-size:.86rem;color:var(--muted);line-height:1.7}
+.news-author{font-size:.76rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 
-/* ═══════════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  nav { padding: 0 20px; }
-  .nav-brand { font-size: 1.2rem; }
-  .hero { flex-direction: column; padding: 48px 20px; gap: 32px; }
-  .hero-text h1 { font-size: 2.2rem; }
-  .hero-stats { gap: 28px; }
-  .page { padding: 32px 18px; }
-  .pgrid { grid-template-columns: 1fr; }
+/* ═══════════════════════════ ABOUT ═══════════════════════════ */
+.about-hero{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:48px;margin-bottom:32px;position:relative}
+.about-tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green-l);font-weight:600;margin-bottom:14px}
+.about-tagline{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--green);line-height:1.3;margin-bottom:18px}
+.about-desc{font-size:.92rem;line-height:1.8;color:var(--text);margin-bottom:16px}
+.about-mission{font-size:.88rem;line-height:1.75;color:var(--muted);border-left:3px solid var(--gold);padding-left:18px}
+.about-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-bottom:32px}
+.acard{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:24px;text-align:center}
+.acard-icon{font-size:2rem;margin-bottom:10px}
+.acard-num{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:600;color:var(--green)}
+.acard-lbl{font-size:.8rem;color:var(--muted);margin-top:4px}
+.about-contact{background:var(--green);color:#fff;border-radius:14px;padding:36px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.about-contact h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem}
+.about-contact p{opacity:.8;font-size:.88rem;margin-top:6px}
+.contact-link{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;padding:10px 22px;border-radius:8px;font-size:.85rem;transition:all .2s;display:inline-block}
+.contact-link:hover{background:rgba(255,255,255,.25)}
+
+/* ═══════════════════════════ MODALS ═══════════════════════════ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:18px;max-width:520px;width:94%;padding:40px;position:relative;max-height:90vh;overflow-y:auto}
+.modal.wide{max-width:660px}
+.modal-x{position:absolute;top:16px;right:20px;background:none;border:none;font-size:1.6rem;color:var(--muted)}
+.modal-x:hover{color:var(--text)}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;margin-bottom:20px}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:.77rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;color:var(--text);outline:none;transition:border-color .2s;background:var(--white)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--green)}
+.fg textarea{resize:vertical;min-height:90px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.factions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+.btn-cancel{background:none;border:1px solid var(--border);padding:9px 20px;border-radius:8px;font-size:.87rem;color:var(--muted)}
+.btn-cancel:hover{border-color:var(--muted);color:var(--text)}
+.btn-save{background:var(--green);color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:.87rem;font-weight:500}
+.btn-save:hover{background:var(--green-l)}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:var(--red);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:.87rem}
+.m-av{width:74px;height:74px;border-radius:50%;margin-bottom:20px;background:linear-gradient(135deg,var(--green-pale),var(--gold-pale));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--green)}
+.m-meta{font-size:.84rem;color:var(--muted);margin-top:5px}
+.m-bio{font-size:.84rem;color:var(--text);line-height:1.65;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.m-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.mlink{display:inline-flex;align-items:center;gap:5px;font-size:.79rem;padding:6px 14px;border-radius:20px;border:1px solid var(--border);color:var(--muted);transition:all .2s}
+.mlink:hover{border-color:var(--green);color:var(--green)}
+.mlink.sc{border-color:#2563eb;color:#2563eb}
+.mlink.sc:hover{background:#2563eb;color:#fff}
+.m-projs{margin-top:22px}
+.m-projs h4{font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:9px}
+.pp{display:inline-block;margin:3px 3px 3px 0;padding:4px 13px;border-radius:20px;background:var(--green-pale);color:var(--green);font-size:.77rem}
+.pw-box{text-align:center}
+.pw-icon{font-size:2.5rem;margin-bottom:14px}
+.pw-box h3{margin-bottom:6px}
+.pw-box p{font-size:.85rem;color:var(--muted);margin-bottom:20px}
+.pw-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.95rem;outline:none;text-align:center;letter-spacing:.1em;transition:border-color .2s}
+.pw-input:focus{border-color:var(--green)}
+.pw-err{color:var(--red);font-size:.82rem;margin-top:8px;display:none}
+.pw-submit{width:100%;margin-top:12px;padding:11px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:500}
+.member-pick-list{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.mpick{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .15s;font-size:.85rem}
+.mpick:hover,.mpick.sel{background:var(--green-pale);border-color:var(--green)}
+.mpick-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--green-pale),var(--gold-pale));display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--green);font-weight:700;flex-shrink:0}
+.mpick-chk{margin-left:auto;color:var(--green);font-weight:700;display:none}
+.mpick.sel .mpick-chk{display:block}
+.empty{text-align:center;padding:64px 0;color:var(--muted)}
+.empty-icon{font-size:2.6rem;margin-bottom:12px}
+footer{background:var(--green);color:rgba(255,255,255,.6);padding:36px 52px;font-size:.8rem;text-align:center;margin-top:80px}
+footer strong{color:rgba(255,255,255,.9)}
+
+@media(max-width:768px){
+  nav{padding:0 20px}.nav-brand{font-size:1.2rem}
+  .hero{flex-direction:column;padding:48px 20px;gap:32px}.hero-text h1{font-size:2.2rem}
+  .page{padding:32px 18px}.pgrid{grid-template-columns:1fr}.fr{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- LOADING SCREEN -->
+<div id="loadScreen">
+  <div class="loader"></div>
+  <div id="loadMsg">Connecting to database…</div>
+</div>
+
+<!-- CONFIG NOTICE (shown if Firebase not set up) -->
+<div id="configNotice">
+  <div class="config-box">
+    <h2>🔧 Firebase 설정 필요</h2>
+    <p>이 웹사이트는 Firebase Firestore를 데이터베이스로 사용합니다.<br>
+    아래 안내에 따라 Firebase 프로젝트를 만들고, 설정값을 <code>index.html</code>에 붙여넣으세요.</p>
+    <div class="config-code">// index.html 하단의 이 부분을 교체하세요:
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};</div>
+    <p style="margin-bottom:12px">단계별 설정 방법은 동봉된 <strong>FIREBASE_SETUP.md</strong> 파일을 참고하세요.</p>
+    <a class="config-link" href="https://console.firebase.google.com" target="_blank">→ Firebase Console 열기</a>
+  </div>
+</div>
+
 <nav>
   <div class="nav-brand">Dr<span>AL</span> Lab</div>
-  <div class="nav-links">
+  <div class="nav-center">
+    <button class="nbtn" onclick="goto('about',this)">About</button>
     <button class="nbtn on" onclick="goto('members',this)">Members</button>
     <button class="nbtn" onclick="goto('projects',this)">Projects</button>
     <button class="nbtn" onclick="goto('recruiting',this)">Recruiting</button>
+    <button class="nbtn" onclick="goto('news',this)">News</button>
+  </div>
+  <div class="nav-right">
+    <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+    <button class="admin-btn" id="adminBtn" onclick="adminToggle()">
+      <span id="adminIcon">🔒</span><span id="adminLabel">Admin</span>
+    </button>
   </div>
 </nav>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-text">
     <h1>Design Research<br>for <em>Active Living</em></h1>
-    <p>We study how the built environment shapes physical activity, health, and well-being — with a commitment to equity, evidence-based design, and community health.</p>
+    <p id="heroDesc">We study how the built environment shapes physical activity, health, and well-being — with a commitment to equity, evidence-based design, and community health.</p>
     <div class="hero-cta">
-      <button class="btn-primary" onclick="goto('recruiting', document.querySelector('.nbtn:last-child'))">View Open Positions</button>
-      <button class="btn-ghost"   onclick="goto('projects',  document.querySelectorAll('.nbtn')[1])">Our Research</button>
+      <button class="btn-gold" onclick="goto('recruiting',document.querySelectorAll('.nbtn')[3])">View Open Positions</button>
+      <button class="btn-ghost" onclick="goto('projects',document.querySelectorAll('.nbtn')[2])">Our Research</button>
     </div>
   </div>
   <div class="hero-stats" id="heroStats"></div>
 </div>
 
-<!-- MEMBERS PAGE -->
+<!-- ABOUT -->
+<div id="page-about" class="page">
+  <div class="sh-row sh">
+    <div><h2>About DrAL Lab</h2><div class="sh-line"></div></div>
+    <button class="add-btn admin-only" style="display:none" onclick="openAboutEdit()">✏️ Edit About</button>
+  </div>
+  <div class="about-hero">
+    <div class="about-tag">Texas A&M University · College of Architecture</div>
+    <div class="about-tagline" id="aboutTagline"></div>
+    <div class="about-desc"    id="aboutDesc2"></div>
+    <div class="about-mission" id="aboutMission"></div>
+  </div>
+  <div class="about-cards" id="aboutCards"></div>
+  <div class="about-contact">
+    <div><h3>Get in Touch</h3><p>Interested in collaborating or joining the lab?</p></div>
+    <a id="contactLink" class="contact-link" href="#">✉ Contact Us</a>
+  </div>
+</div>
+
+<!-- MEMBERS -->
 <div id="page-members" class="page on">
-  <div class="sh">
-    <h2>Lab Members</h2><div class="sh-line"></div>
-    <p>Faculty, researchers, and graduate students advancing active living research.</p>
+  <div class="sh"><h2>Lab Members</h2><div class="sh-line"></div><p>Faculty, researchers, and graduate students advancing active living research.</p></div>
+  <div class="admin-bar" id="mAdminBar">
+    <span>🟢 Admin Mode — ✏️/🗑 버튼으로 편집/삭제, 또는 새 멤버 추가</span>
+    <button class="add-btn" onclick="openMemberForm()">+ Add Member</button>
   </div>
   <div class="fbar">
     <input type="text" id="ms" placeholder="Search members…" oninput="rMembers()">
-    <button class="fb on"  onclick="mf('all',this)">All</button>
-    <button class="fb"     onclick="mf('Faculty',this)">Faculty</button>
-    <button class="fb"     onclick="mf('PhD Student',this)">PhD Students</button>
-    <button class="fb"     onclick="mf('Post Doc',this)">Post Docs</button>
-    <button class="fb"     onclick="mf('Researcher',this)">Researchers</button>
+    <button class="fb on" onclick="mf('all',this)">All</button>
+    <button class="fb" onclick="mf('Faculty',this)">Faculty</button>
+    <button class="fb" onclick="mf('PhD Student',this)">PhD Students</button>
+    <button class="fb" onclick="mf('Post Doc',this)">Post Docs</button>
+    <button class="fb" onclick="mf('Researcher',this)">Researchers</button>
   </div>
   <div class="mgrid" id="mGrid"></div>
 </div>
 
-<!-- PROJECTS PAGE -->
+<!-- PROJECTS -->
 <div id="page-projects" class="page">
-  <div class="sh">
-    <h2>Research Projects</h2><div class="sh-line"></div>
-    <p>Ongoing investigations across built environment, health equity, and active transportation.</p>
+  <div class="sh"><h2>Research Projects</h2><div class="sh-line"></div><p>Ongoing investigations across built environment, health equity, and active transportation.</p></div>
+  <div class="admin-bar" id="pAdminBar">
+    <span>🟢 Admin Mode — 프로젝트 편집, 팀원 관리, 새 프로젝트 추가</span>
+    <button class="add-btn" onclick="openProjForm()">+ Add Project</button>
   </div>
   <div class="fbar">
     <input type="text" id="ps" placeholder="Search projects…" oninput="rProjects()">
-    <button class="fb on"  onclick="pf('all',this)">All</button>
-    <button class="fb"     onclick="pf('Health',this)">Health</button>
-    <button class="fb"     onclick="pf('Mobility',this)">Mobility</button>
-    <button class="fb"     onclick="pf('Equity',this)">Equity</button>
-    <button class="fb"     onclick="pf('Urban Design',this)">Urban Design</button>
-    <button class="fb"     onclick="pf('Aging',this)">Aging</button>
+    <button class="fb on" onclick="pf('all',this)">All</button>
+    <button class="fb" onclick="pf('Health',this)">Health</button>
+    <button class="fb" onclick="pf('Mobility',this)">Mobility</button>
+    <button class="fb" onclick="pf('Equity',this)">Equity</button>
+    <button class="fb" onclick="pf('Urban Design',this)">Urban Design</button>
+    <button class="fb" onclick="pf('Aging',this)">Aging</button>
   </div>
   <div class="pgrid" id="pGrid"></div>
 </div>
 
-<!-- RECRUITING PAGE -->
+<!-- RECRUITING -->
 <div id="page-recruiting" class="page">
-  <div class="rec-head">
+  <div class="sh-row sh">
     <div><h2>Open Positions</h2><div class="sh-line"></div></div>
+  </div>
+  <div class="admin-bar" id="rAdminBar">
+    <span>🟢 Admin Mode — 채용 공고 추가/편집/삭제</span>
+    <button class="add-btn" onclick="openRecForm()">+ Add Posting</button>
   </div>
   <div class="fbar">
     <input type="text" id="rs" placeholder="Search positions…" oninput="rRec()">
-    <button class="fb on"  onclick="rf('all',this)">All</button>
-    <button class="fb"     onclick="rf('PhD Position',this)">PhD</button>
-    <button class="fb"     onclick="rf('Postdoc',this)">Postdoc</button>
-    <button class="fb"     onclick="rf('RA',this)">RA</button>
-    <button class="fb"     onclick="rf('Undergraduate',this)">Undergraduate</button>
+    <button class="fb on" onclick="rf('all',this)">All</button>
+    <button class="fb" onclick="rf('PhD Position',this)">PhD</button>
+    <button class="fb" onclick="rf('Postdoc',this)">Postdoc</button>
+    <button class="fb" onclick="rf('RA',this)">RA</button>
+    <button class="fb" onclick="rf('Undergraduate',this)">Undergraduate</button>
   </div>
   <div class="rgrid" id="rGrid"></div>
 </div>
 
-<!-- FOOTER -->
+<!-- NEWS -->
+<div id="page-news" class="page">
+  <div class="sh-row sh">
+    <div><h2>Lab News</h2><div class="sh-line"></div><p>Latest updates, publications, awards, and events from DrAL Lab.</p></div>
+  </div>
+  <div class="admin-bar" id="nAdminBar">
+    <span>🟢 Admin Mode — 뉴스 추가/편집/삭제</span>
+    <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
+  </div>
+  <div class="news-feed" id="newsFeed"></div>
+</div>
+
 <footer>
   <strong>DrAL Lab</strong> · Design Research for Active Living · Texas A&M University<br>
   <span style="margin-top:5px;display:block">Department of Landscape Architecture & Urban Planning · College of Architecture</span>
 </footer>
 
-<!-- MEMBER MODAL -->
-<div class="overlay" id="mModal" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <button class="modal-x" onclick="closeModal()">×</button>
-    <div class="m-av" id="mAv"></div>
-    <h3 id="mName"></h3>
-    <div class="m-meta"  id="mMeta"></div>
-    <div class="m-bio"   id="mBio" style="display:none"></div>
-    <div class="m-links" id="mLinks"></div>
-    <div class="m-projs" id="mProjs"></div>
+<!-- ═══ MODALS ═══ -->
+
+<!-- Password -->
+<div class="overlay" id="pwModal" onclick="if(event.target===this)closeModal('pwModal')">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-x" onclick="closeModal('pwModal')">×</button>
+    <div class="pw-box">
+      <div class="pw-icon">🔐</div>
+      <h3>Admin Access</h3>
+      <p>Enter the lab admin password to enable editing.</p>
+      <input class="pw-input" type="password" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+      <div class="pw-err" id="pwErr">Incorrect password.</div>
+      <button class="pw-submit" onclick="checkPw()">Enter</button>
+    </div>
   </div>
 </div>
 
-<!-- DATA + LOGIC -->
+<!-- Member view -->
+<div class="overlay" id="mViewModal" onclick="if(event.target===this)closeModal('mViewModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('mViewModal')">×</button>
+    <div class="m-av" id="mvAv"></div>
+    <h3 id="mvName"></h3>
+    <div class="m-meta" id="mvMeta"></div>
+    <div class="m-bio" id="mvBio" style="display:none"></div>
+    <div class="m-links" id="mvLinks"></div>
+    <div class="m-projs" id="mvProjs"></div>
+    <div class="factions" id="mvAdminActions" style="display:none">
+      <button class="btn-cancel" onclick="closeModal('mViewModal')">Close</button>
+      <button class="btn-cancel" onclick="editMemberFromView()">✏️ Edit</button>
+      <button class="btn-danger" onclick="deleteMemberFromView()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Member form -->
+<div class="overlay" id="mFormModal" onclick="if(event.target===this)closeModal('mFormModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('mFormModal')">×</button>
+    <h3 id="mFormTitle">Add Member</h3>
+    <input type="hidden" id="mfId">
+    <div class="fr">
+      <div class="fg"><label>Name *</label><input id="mfName" type="text" placeholder="Jane Doe"></div>
+      <div class="fg"><label>Role *</label>
+        <select id="mfRole"><option>Faculty</option><option>PhD Student</option><option>Post Doc</option><option>Researcher</option><option>Visiting Scholar</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>Email *</label><input id="mfEmail" type="email" placeholder="janedoe@tamu.edu"></div>
+    <div class="fr">
+      <div class="fg"><label>Advisor</label><input id="mfAdvisor" type="text" placeholder="Chanam Lee"></div>
+      <div class="fg"><label>Status</label><select id="mfStatus"><option>Active</option><option>Former</option><option>Visiting</option></select></div>
+    </div>
+    <div class="fg"><label>Google Scholar URL</label><input id="mfScholar" type="url" placeholder="https://scholar.google.com/..."></div>
+    <div class="fg"><label>TAMU Profile URL</label><input id="mfTamu" type="url" placeholder="https://www.arch.tamu.edu/staff/..."></div>
+    <div class="fg"><label>Bio</label><textarea id="mfBio" placeholder="Brief introduction..."></textarea></div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('mFormModal')">Cancel</button>
+      <button class="btn-save" id="mfSaveBtn" onclick="saveMember()">Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- Project form -->
+<div class="overlay" id="pFormModal" onclick="if(event.target===this)closeModal('pFormModal')">
+  <div class="modal wide">
+    <button class="modal-x" onclick="closeModal('pFormModal')">×</button>
+    <h3 id="pFormTitle">Add Project</h3>
+    <input type="hidden" id="pfId">
+    <div class="fr">
+      <div class="fg"><label>Title *</label><input id="pfTitle" type="text"></div>
+      <div class="fg"><label>Abbreviation</label><input id="pfAbbr" type="text" placeholder="AEP"></div>
+    </div>
+    <div class="fg"><label>Description *</label><textarea id="pfDesc"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>PI</label><input id="pfPi" type="text"></div>
+      <div class="fg"><label>Funding</label><input id="pfFunding" type="text" placeholder="NIH R01"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Tags (comma-separated)</label><input id="pfTags" type="text" placeholder="Health, Equity, Aging"></div>
+      <div class="fg"><label>Status</label><select id="pfStatus"><option>Active</option><option>Completed</option><option>Paused</option></select></div>
+    </div>
+    <div class="fg"><label>Google Drive URL</label><input id="pfDrive" type="url"></div>
+    <div class="fg" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="pfRec" style="width:18px;height:18px">
+      <label for="pfRec" style="text-transform:none;letter-spacing:0;font-size:.88rem;cursor:pointer">Currently recruiting</label>
+    </div>
+    <div class="fg">
+      <label>Team Members</label>
+      <input type="text" id="pfMemberSearch" placeholder="Search members…" oninput="buildMemberPick()">
+      <div class="member-pick-list" id="memberPickList"></div>
+    </div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('pFormModal')">Cancel</button>
+      <button class="btn-save" id="pfSaveBtn" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recruiting form -->
+<div class="overlay" id="rFormModal" onclick="if(event.target===this)closeModal('rFormModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('rFormModal')">×</button>
+    <h3 id="rFormTitle">Add Posting</h3>
+    <input type="hidden" id="rfId">
+    <div class="fg"><label>Title *</label><input id="rfTitle" type="text"></div>
+    <div class="fr">
+      <div class="fg"><label>Type</label><select id="rfType"><option>PhD Position</option><option>Postdoc</option><option>RA</option><option>Undergraduate</option></select></div>
+      <div class="fg"><label>Project</label><select id="rfProject"></select></div>
+    </div>
+    <div class="fg"><label>Description *</label><textarea id="rfDesc"></textarea></div>
+    <div class="fr">
+      <div class="fg"><label>Deadline</label><input id="rfDeadline" type="date"></div>
+      <div class="fg"><label>Funding</label><input id="rfFunding" type="text"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Contact Email *</label><input id="rfEmail" type="email"></div>
+      <div class="fg"><label>Status</label><select id="rfStatus"><option>Open</option><option>Closed</option><option>Filled</option></select></div>
+    </div>
+    <div class="fg" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="rfUrgent" style="width:18px;height:18px">
+      <label for="rfUrgent" style="text-transform:none;letter-spacing:0;font-size:.88rem;cursor:pointer">Mark as Urgent</label>
+    </div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('rFormModal')">Cancel</button>
+      <button class="btn-save" id="rfSaveBtn" onclick="saveRec()">Save Posting</button>
+    </div>
+  </div>
+</div>
+
+<!-- News form -->
+<div class="overlay" id="nFormModal" onclick="if(event.target===this)closeModal('nFormModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('nFormModal')">×</button>
+    <h3 id="nFormTitle">Add News</h3>
+    <input type="hidden" id="nfId">
+    <div class="fg"><label>Headline *</label><input id="nfTitle" type="text"></div>
+    <div class="fr">
+      <div class="fg"><label>Category</label><select id="nfCat"><option>Publication</option><option>Award</option><option>Event</option><option>Announcement</option><option>Other</option></select></div>
+      <div class="fg"><label>Date *</label><input id="nfDate" type="date"></div>
+    </div>
+    <div class="fg"><label>Content *</label><textarea id="nfContent"></textarea></div>
+    <div class="fg"><label>Author</label><input id="nfAuthor" type="text" value="DrAL Lab"></div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('nFormModal')">Cancel</button>
+      <button class="btn-save" id="nfSaveBtn" onclick="saveNews()">Save News</button>
+    </div>
+  </div>
+</div>
+
+<!-- About edit -->
+<div class="overlay" id="aboutModal" onclick="if(event.target===this)closeModal('aboutModal')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('aboutModal')">×</button>
+    <h3>Edit About Page</h3>
+    <div class="fg"><label>Tagline</label><input id="afTagline" type="text"></div>
+    <div class="fg"><label>Description</label><textarea id="afDesc" style="min-height:110px"></textarea></div>
+    <div class="fg"><label>Mission Statement</label><textarea id="afMission" style="min-height:80px"></textarea></div>
+    <div class="fg"><label>Contact Email</label><input id="afContact" type="email"></div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('aboutModal')">Cancel</button>
+      <button class="btn-save" onclick="saveAbout()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="overlay" id="confirmModal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:12px">⚠️</div>
+    <h3 id="confirmMsg" style="font-size:1.3rem;margin-bottom:10px"></h3>
+    <p id="confirmSub" style="font-size:.85rem;color:var(--muted);margin-bottom:24px">This action cannot be undone.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DATA + FIREBASE ═══ -->
 <script src="data.js"></script>
 <script>
-/* ── helpers ─────────────────────────────────────────────── */
-const D   = window.LAB_DATA;
-const ini = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-const gm  = id => D.members.find(m=>m.id===id);
-const gp  = id => D.projects.find(p=>p.id===id);
-const fmt = s  => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
-const rb  = r  => ({Faculty:'rb-f','PhD Student':'rb-p','Post Doc':'rb-d',Researcher:'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
+/* ══════════════════════════════════════════════════
+   ▼▼▼  여기에 Firebase 설정값을 붙여넣으세요  ▼▼▼
+   FIREBASE_SETUP.md 파일의 3단계를 참고하세요.
+══════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+/* ▲▲▲ 설정값 붙여넣기 끝 ▲▲▲ */
 
-/* ── state ───────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   비밀번호 변경: btoa("새비밀번호") 로 계산 후 교체
+══════════════════════════════════════════════════ */
+const PW_HASH = btoa('dral2026');
+
+/* ══════════════════════════════════════════════════
+   FIREBASE INIT
+══════════════════════════════════════════════════ */
+const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
+let db, DOC_REF;
+
+if(IS_CONFIGURED) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.firestore();
+  DOC_REF = db.collection('lab').doc('data');
+}
+
+/* ══════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════ */
+let D = null;
+let isAdmin = false;
 let mFilter='all', pFilter='all', rFilter='all';
+let _viewMemberId = null;
+let _pickedMemberIds = [];
 
-/* ── nav ─────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+const ini  = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const gm   = id => D.members.find(m=>m.id===id);
+const gp   = id => D.projects.find(p=>p.id===id);
+const fmt  = s => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
+const rb   = r => ({'Faculty':'rb-f','PhD Student':'rb-p','Post Doc':'rb-d','Researcher':'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
+const nextId = arr => arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1;
+
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function openModal(id) { document.getElementById(id).classList.add('open') }
+
+function setLoading(msg){
+  document.getElementById('loadMsg').textContent = msg;
+}
+
+function showSaved(){
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+/* ══════════════════════════════════════════════════
+   FIREBASE READ / WRITE
+══════════════════════════════════════════════════ */
+async function loadFromFirebase() {
+  setLoading('Loading lab data…');
+  try {
+    const snap = await DOC_REF.get();
+    if(snap.exists) {
+      D = snap.data();
+    } else {
+      // First time: seed data to Firebase
+      setLoading('Setting up database (first time)…');
+      D = JSON.parse(JSON.stringify(window.SEED_DATA));
+      await DOC_REF.set(D);
+    }
+  } catch(e) {
+    console.error('Firebase error:', e);
+    // Fallback to seed data if offline
+    D = JSON.parse(JSON.stringify(window.SEED_DATA));
+  }
+}
+
+async function saveToFirebase() {
+  if(!IS_CONFIGURED || !D) return;
+  try {
+    await DOC_REF.set(D);
+    showSaved();
+  } catch(e) {
+    console.error('Save error:', e);
+    alert('저장 실패. 인터넷 연결을 확인해주세요.');
+  }
+}
+
+// Real-time listener: when data changes in Firebase, update all visitors
+function startRealtimeListener() {
+  if(!IS_CONFIGURED) return;
+  DOC_REF.onSnapshot(snap => {
+    if(snap.exists) {
+      D = snap.data();
+      renderAll();
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════════ */
 function goto(name, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+name).classList.add('on');
   if(btn) btn.classList.add('on');
-  if(name==='projects')  rProjects();
+  if(name==='about')    renderAbout();
+  if(name==='projects') rProjects();
   if(name==='recruiting') rRec();
+  if(name==='news')     rNews();
 }
 
-/* ── HERO STATS ──────────────────────────────────────────── */
-(function(){
-  const active = D.members.filter(m=>m.status==='Active').length;
-  document.getElementById('heroStats').innerHTML = [
+/* ══════════════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════════════ */
+function adminToggle(){
+  if(isAdmin){
+    isAdmin=false;
+    document.body.classList.remove('admin-mode');
+    document.getElementById('adminBtn').classList.remove('on');
+    document.getElementById('adminIcon').textContent='🔒';
+    document.getElementById('adminLabel').textContent='Admin';
+    document.querySelectorAll('.admin-bar').forEach(b=>b.classList.remove('show'));
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+    renderAll();
+  } else {
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwErr').style.display='none';
+    openModal('pwModal');
+    setTimeout(()=>document.getElementById('pwInput').focus(),200);
+  }
+}
+
+function checkPw(){
+  const v=document.getElementById('pwInput').value;
+  if(btoa(v)===PW_HASH){
+    isAdmin=true;
+    closeModal('pwModal');
+    document.body.classList.add('admin-mode');
+    document.getElementById('adminBtn').classList.add('on');
+    document.getElementById('adminIcon').textContent='✅';
+    document.getElementById('adminLabel').textContent='Admin ON';
+    document.querySelectorAll('.admin-bar').forEach(b=>b.classList.add('show'));
+    document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
+    renderAll();
+  } else {
+    document.getElementById('pwErr').style.display='block';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════════ */
+function renderStats(){
+  if(!D) return;
+  const active=D.members.filter(m=>m.status==='Active').length;
+  document.getElementById('heroStats').innerHTML=[
     [active+'+','Members'],
     [D.projects.length,'Projects'],
     [D.members.filter(m=>m.role==='Faculty').length,'Faculty'],
   ].map(([n,l])=>`<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`).join('');
-})();
+  document.getElementById('heroDesc').textContent=D.about.description;
+}
 
-/* ── MEMBERS ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   ABOUT
+══════════════════════════════════════════════════ */
+function renderAbout(){
+  if(!D) return;
+  const a=D.about;
+  document.getElementById('aboutTagline').textContent=a.tagline;
+  document.getElementById('aboutDesc2').textContent=a.description;
+  document.getElementById('aboutMission').textContent=a.mission;
+  document.getElementById('contactLink').href='mailto:'+a.contact;
+  document.getElementById('aboutCards').innerHTML=[
+    ['🏫','Texas A&M','University'],
+    ['👥',D.members.filter(m=>m.status==='Active').length+'+','Active Members'],
+    ['🔬',D.projects.length,'Research Projects'],
+    ['📄','100+','Publications'],
+  ].map(([i,n,l])=>`<div class="acard"><div class="acard-icon">${i}</div><div class="acard-num">${n}</div><div class="acard-lbl">${l}</div></div>`).join('');
+  if(isAdmin) document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
+}
+
+function openAboutEdit(){
+  const a=D.about;
+  document.getElementById('afTagline').value=a.tagline;
+  document.getElementById('afDesc').value=a.description;
+  document.getElementById('afMission').value=a.mission;
+  document.getElementById('afContact').value=a.contact;
+  openModal('aboutModal');
+}
+async function saveAbout(){
+  D.about={
+    tagline:     document.getElementById('afTagline').value.trim(),
+    description: document.getElementById('afDesc').value.trim(),
+    mission:     document.getElementById('afMission').value.trim(),
+    contact:     document.getElementById('afContact').value.trim(),
+  };
+  await saveToFirebase();
+  closeModal('aboutModal');
+  renderAbout(); renderStats();
+}
+
+/* ══════════════════════════════════════════════════
+   MEMBERS
+══════════════════════════════════════════════════ */
 function mf(f,btn){mFilter=f;document.querySelectorAll('#page-members .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rMembers()}
 
 function rMembers(){
+  if(!D) return;
   const q=document.getElementById('ms').value.toLowerCase();
   const list=D.members.filter(m=>
-    m.status==='Active' &&
-    (mFilter==='all'||m.role===mFilter) &&
+    m.status==='Active'&&
+    (mFilter==='all'||m.role===mFilter)&&
     (!q||m.name.toLowerCase().includes(q)||(m.advisor||'').toLowerCase().includes(q))
   );
   const g=document.getElementById('mGrid');
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><p>No members found.</p></div>`;return}
   g.innerHTML=list.map(m=>`
-    <div class="mc" onclick="openM(${m.id})">
+    <div class="mc" onclick="openMemberView(${m.id})">
+      <div class="card-admin" onclick="event.stopPropagation()">
+        <button class="ica ica-edit" onclick="openMemberForm(${m.id})">✏️</button>
+        <button class="ica ica-del"  onclick="confirmDelete('member',${m.id})">🗑</button>
+      </div>
       <div class="mc-av">${ini(m.name)}</div>
       <div class="mc-body">
         <div class="mc-name">${m.name}</div>
         <div class="mc-email">${m.email}</div>
         ${m.advisor?`<div class="mc-adv">Advisor: ${m.advisor}</div>`:''}
         <span class="rbadge ${rb(m.role)}">${m.role}</span>
-        ${m.scholar?`<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Google Scholar</a>`:''}
+        ${m.scholar?`<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Scholar</a>`:''}
       </div>
     </div>`).join('');
 }
 
-function openM(id){
+function openMemberView(id){
+  _viewMemberId=id;
   const m=gm(id);
-  document.getElementById('mAv').textContent=ini(m.name);
-  document.getElementById('mName').textContent=m.name;
-  document.getElementById('mMeta').textContent=m.role+(m.advisor?' · Advisor: '+m.advisor:'');
-  const bio=document.getElementById('mBio');
-  if(m.bio){bio.textContent=m.bio;bio.style.display='block'}else{bio.style.display='none'}
-  const links=[`<a class="mlink" href="mailto:${m.email}">✉ ${m.email}</a>`];
-  if(m.scholar) links.push(`<a class="mlink sc" href="${m.scholar}" target="_blank">🎓 Google Scholar</a>`);
-  if(m.tamu)    links.push(`<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>`);
-  document.getElementById('mLinks').innerHTML=links.join('');
+  document.getElementById('mvAv').textContent=ini(m.name);
+  document.getElementById('mvName').textContent=m.name;
+  document.getElementById('mvMeta').textContent=m.role+(m.advisor?' · Advisor: '+m.advisor:'');
+  const bio=document.getElementById('mvBio');
+  m.bio?(bio.textContent=m.bio,bio.style.display='block'):bio.style.display='none';
+  document.getElementById('mvLinks').innerHTML=[
+    `<a class="mlink" href="mailto:${m.email}">✉ ${m.email}</a>`,
+    m.scholar?`<a class="mlink sc" href="${m.scholar}" target="_blank">🎓 Google Scholar</a>`:'',
+    m.tamu?`<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>`:'',
+  ].join('');
   const projs=D.projects.filter(p=>p.memberIds.includes(id));
-  document.getElementById('mProjs').innerHTML=projs.length
-    ?`<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}`:'';
-  document.getElementById('mModal').classList.add('open');
+  document.getElementById('mvProjs').innerHTML=projs.length?`<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}`:'';
+  document.getElementById('mvAdminActions').style.display=isAdmin?'flex':'none';
+  openModal('mViewModal');
 }
-function closeModal(){document.getElementById('mModal').classList.remove('open')}
+function editMemberFromView(){closeModal('mViewModal');openMemberForm(_viewMemberId)}
+function deleteMemberFromView(){closeModal('mViewModal');confirmDelete('member',_viewMemberId)}
 
-/* ── PROJECTS ────────────────────────────────────────────── */
+function openMemberForm(id=null){
+  document.getElementById('mFormTitle').textContent=id?'Edit Member':'Add Member';
+  if(id){
+    const m=gm(id);
+    document.getElementById('mfId').value=m.id;
+    document.getElementById('mfName').value=m.name;
+    document.getElementById('mfRole').value=m.role;
+    document.getElementById('mfEmail').value=m.email;
+    document.getElementById('mfAdvisor').value=m.advisor||'';
+    document.getElementById('mfStatus').value=m.status;
+    document.getElementById('mfScholar').value=m.scholar||'';
+    document.getElementById('mfTamu').value=m.tamu||'';
+    document.getElementById('mfBio').value=m.bio||'';
+  } else {
+    ['mfId','mfName','mfEmail','mfAdvisor','mfScholar','mfTamu','mfBio'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('mfRole').value='PhD Student';
+    document.getElementById('mfStatus').value='Active';
+  }
+  openModal('mFormModal');
+}
+
+async function saveMember(){
+  const name=document.getElementById('mfName').value.trim();
+  const email=document.getElementById('mfEmail').value.trim();
+  if(!name||!email){alert('Name and Email are required.');return}
+  const btn=document.getElementById('mfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('mfId').value||'0');
+  const obj={
+    id:id||nextId(D.members), name, email,
+    role:document.getElementById('mfRole').value,
+    status:document.getElementById('mfStatus').value,
+    advisor:document.getElementById('mfAdvisor').value.trim()||null,
+    scholar:document.getElementById('mfScholar').value.trim()||null,
+    tamu:document.getElementById('mfTamu').value.trim()||null,
+    bio:document.getElementById('mfBio').value.trim()||null,
+  };
+  if(id){const i=D.members.findIndex(m=>m.id===id);D.members[i]=obj;}
+  else{D.members.push(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save Member';
+  closeModal('mFormModal'); rMembers(); renderStats();
+}
+
+/* ══════════════════════════════════════════════════
+   PROJECTS
+══════════════════════════════════════════════════ */
 function pf(f,btn){pFilter=f;document.querySelectorAll('#page-projects .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rProjects()}
 
 function rProjects(){
+  if(!D) return;
   const q=document.getElementById('ps').value.toLowerCase();
   const list=D.projects.filter(p=>
-    (pFilter==='all'||p.tags.includes(pFilter)) &&
+    (pFilter==='all'||p.tags.includes(pFilter))&&
     (!q||p.title.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q))
   );
   const g=document.getElementById('pGrid');
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
   g.innerHTML=list.map(p=>{
-    const chips=p.memberIds.map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}</div>`:''}).join('');
     const tags=p.tags.map(t=>`<span class="tag t-${t.replace(' ','')}">${t}</span>`).join('');
-    const drv=p.driveUrl
-      ?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">📁 Drive Folder</a>`
-      :`<span class="drive-btn na">📁 Not linked</span>`;
+    const chips=p.memberIds.map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
+    const drv=p.driveUrl?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">📁 Drive</a>`:`<span class="drive-btn na">📁 Not linked</span>`;
     return `
     <div class="pc">
       <div class="pc-head">
         <div class="tags">${tags}</div>
-        <div class="pc-title">${p.title}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="pc-title">${p.title}</div>
+          ${isAdmin?`<div style="display:flex;gap:4px;flex-shrink:0"><button class="ica ica-edit" onclick="openProjForm(${p.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('project',${p.id})">🗑</button></div>`:''}
+        </div>
         <p class="pc-desc">${p.desc}</p>
       </div>
       <div class="pc-body">
-        <div class="team-lbl">Team (${p.memberIds.length})</div>
+        <div class="team-lbl">Team (${p.memberIds.length})${isAdmin?' — ✕로 제거':''}:</div>
         <div class="chips">${chips}</div>
+        ${isAdmin?`<button class="add-btn" style="margin-top:10px;font-size:.75rem;padding:6px 14px" onclick="openProjForm(${p.id})">+ Team Member 추가</button>`:''}
       </div>
       <div class="pc-foot">
         <div class="sdot"><div class="dot ${p.recruiting?'dot-r':'dot-a'}"></div><span>${p.recruiting?'Recruiting':'Active'}</span></div>
@@ -528,14 +944,95 @@ function rProjects(){
   }).join('');
 }
 
-/* ── RECRUITING ──────────────────────────────────────────── */
+async function removeMemberFromProj(projId,memberId,e){
+  e.stopPropagation();
+  const p=gp(projId);
+  p.memberIds=p.memberIds.filter(id=>id!==memberId);
+  await saveToFirebase();
+  rProjects();
+}
+
+function openProjForm(id=null){
+  _pickedMemberIds=[];
+  document.getElementById('pFormTitle').textContent=id?'Edit Project':'Add Project';
+  if(id){
+    const p=gp(id);
+    _pickedMemberIds=[...p.memberIds];
+    document.getElementById('pfId').value=p.id;
+    document.getElementById('pfTitle').value=p.title;
+    document.getElementById('pfAbbr').value=p.abbr||'';
+    document.getElementById('pfDesc').value=p.desc;
+    document.getElementById('pfPi').value=p.pi||'';
+    document.getElementById('pfFunding').value=p.funding||'';
+    document.getElementById('pfTags').value=p.tags.join(', ');
+    document.getElementById('pfStatus').value=p.status;
+    document.getElementById('pfDrive').value=p.driveUrl||'';
+    document.getElementById('pfRec').checked=p.recruiting;
+  } else {
+    ['pfId','pfTitle','pfAbbr','pfDesc','pfPi','pfFunding','pfTags','pfDrive'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('pfStatus').value='Active';
+    document.getElementById('pfRec').checked=false;
+  }
+  document.getElementById('pfMemberSearch').value='';
+  buildMemberPick();
+  openModal('pFormModal');
+}
+
+function buildMemberPick(){
+  const q=document.getElementById('pfMemberSearch').value.toLowerCase();
+  const list=D.members.filter(m=>m.status==='Active'&&(!q||m.name.toLowerCase().includes(q)));
+  document.getElementById('memberPickList').innerHTML=list.map(m=>{
+    const sel=_pickedMemberIds.includes(m.id);
+    return `<div class="mpick ${sel?'sel':''}" onclick="togglePick(${m.id})">
+      <div class="mpick-av">${ini(m.name)}</div>
+      <span>${m.name}</span>
+      <span style="font-size:.72rem;color:var(--muted);margin-left:4px">${m.role}</span>
+      <span class="mpick-chk">✓</span>
+    </div>`;
+  }).join('');
+}
+function togglePick(id){
+  if(_pickedMemberIds.includes(id))_pickedMemberIds=_pickedMemberIds.filter(x=>x!==id);
+  else _pickedMemberIds.push(id);
+  buildMemberPick();
+}
+
+async function saveProject(){
+  const title=document.getElementById('pfTitle').value.trim();
+  const desc=document.getElementById('pfDesc').value.trim();
+  if(!title||!desc){alert('Title and Description are required.');return}
+  const btn=document.getElementById('pfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('pfId').value||'0');
+  const tags=document.getElementById('pfTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const obj={
+    id:id||nextId(D.projects), title, desc, tags,
+    abbr:document.getElementById('pfAbbr').value.trim()||title.split(' ').map(w=>w[0]).join('').toUpperCase(),
+    pi:document.getElementById('pfPi').value.trim()||null,
+    funding:document.getElementById('pfFunding').value.trim()||null,
+    status:document.getElementById('pfStatus').value,
+    driveUrl:document.getElementById('pfDrive').value.trim()||null,
+    recruiting:document.getElementById('pfRec').checked,
+    memberIds:[..._pickedMemberIds],
+  };
+  if(id){const i=D.projects.findIndex(p=>p.id===id);D.projects[i]=obj;}
+  else{D.projects.push(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save Project';
+  closeModal('pFormModal'); rProjects(); renderStats();
+}
+
+/* ══════════════════════════════════════════════════
+   RECRUITING
+══════════════════════════════════════════════════ */
 function rf(f,btn){rFilter=f;document.querySelectorAll('#page-recruiting .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rRec()}
 
 function rRec(){
+  if(!D) return;
   const q=document.getElementById('rs').value.toLowerCase();
   const list=D.recruiting.filter(r=>
-    r.status==='Open' &&
-    (rFilter==='all'||r.type===rFilter) &&
+    r.status==='Open'&&
+    (rFilter==='all'||r.type===rFilter)&&
     (!q||r.title.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q))
   );
   const g=document.getElementById('rGrid');
@@ -544,11 +1041,9 @@ function rRec(){
     const proj=gp(r.projectId);
     return `
     <div class="rc ${r.urgent?'urg':''}">
+      ${isAdmin?`<div style="position:absolute;top:14px;right:14px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openRecForm(${r.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('rec',${r.id})">🗑</button></div>`:''}
       <div class="rc-top">
-        <div>
-          <div class="rc-title">${r.title}</div>
-          <div class="rc-proj">${proj?proj.title:''}</div>
-        </div>
+        <div><div class="rc-title">${r.title}</div><div class="rc-proj">${proj?proj.title:''}</div></div>
         <div class="rc-badges">
           <span class="rbg rbg-t">${r.type}</span>
           ${r.urgent?'<span class="rbg rbg-u">Urgent</span>':''}
@@ -567,8 +1062,179 @@ function rRec(){
   }).join('');
 }
 
-/* ── INIT ────────────────────────────────────────────────── */
-rMembers();
+function openRecForm(id=null){
+  document.getElementById('rfProject').innerHTML=
+    `<option value="">— None —</option>`+
+    D.projects.map(p=>`<option value="${p.id}">${p.title}</option>`).join('');
+  document.getElementById('rFormTitle').textContent=id?'Edit Posting':'Add Posting';
+  if(id){
+    const r=D.recruiting.find(x=>x.id===id);
+    document.getElementById('rfId').value=r.id;
+    document.getElementById('rfTitle').value=r.title;
+    document.getElementById('rfType').value=r.type;
+    document.getElementById('rfProject').value=r.projectId||'';
+    document.getElementById('rfDesc').value=r.desc;
+    document.getElementById('rfDeadline').value=r.deadline||'';
+    document.getElementById('rfFunding').value=r.funding||'';
+    document.getElementById('rfEmail').value=r.contactEmail;
+    document.getElementById('rfStatus').value=r.status;
+    document.getElementById('rfUrgent').checked=r.urgent;
+  } else {
+    ['rfId','rfTitle','rfDesc','rfDeadline','rfFunding','rfEmail'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('rfType').value='PhD Position';
+    document.getElementById('rfStatus').value='Open';
+    document.getElementById('rfUrgent').checked=false;
+  }
+  openModal('rFormModal');
+}
+
+async function saveRec(){
+  const title=document.getElementById('rfTitle').value.trim();
+  const email=document.getElementById('rfEmail').value.trim();
+  const desc=document.getElementById('rfDesc').value.trim();
+  if(!title||!email||!desc){alert('Title, Email, Description are required.');return}
+  const btn=document.getElementById('rfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('rfId').value||'0');
+  const obj={
+    id:id||nextId(D.recruiting), title, desc,
+    type:document.getElementById('rfType').value,
+    projectId:parseInt(document.getElementById('rfProject').value||'0')||null,
+    contactEmail:email,
+    deadline:document.getElementById('rfDeadline').value||null,
+    funding:document.getElementById('rfFunding').value.trim()||null,
+    status:document.getElementById('rfStatus').value,
+    urgent:document.getElementById('rfUrgent').checked,
+  };
+  if(id){const i=D.recruiting.findIndex(r=>r.id===id);D.recruiting[i]=obj;}
+  else{D.recruiting.unshift(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save Posting';
+  closeModal('rFormModal'); rRec();
+}
+
+/* ══════════════════════════════════════════════════
+   NEWS
+══════════════════════════════════════════════════ */
+function rNews(){
+  if(!D) return;
+  const feed=document.getElementById('newsFeed');
+  const sorted=[...D.news].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!sorted.length){feed.innerHTML=`<div class="empty"><div class="empty-icon">📰</div><p>No news yet.</p></div>`;return}
+  feed.innerHTML=sorted.map(n=>`
+    <div class="news-card">
+      ${isAdmin?`<div style="position:absolute;top:16px;right:16px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openNewsForm(${n.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('news',${n.id})">🗑</button></div>`:''}
+      <div class="news-meta">
+        <span class="news-cat cat-${n.category.replace(' ','')}">${n.category}</span>
+        <span class="news-date">${fmt(n.date)}</span>
+      </div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-body">${n.content}</div>
+      <div class="news-author">— ${n.author}</div>
+    </div>`).join('');
+}
+
+function openNewsForm(id=null){
+  document.getElementById('nFormTitle').textContent=id?'Edit News':'Add News';
+  if(id){
+    const n=D.news.find(x=>x.id===id);
+    document.getElementById('nfId').value=n.id;
+    document.getElementById('nfTitle').value=n.title;
+    document.getElementById('nfCat').value=n.category;
+    document.getElementById('nfDate').value=n.date;
+    document.getElementById('nfContent').value=n.content;
+    document.getElementById('nfAuthor').value=n.author;
+  } else {
+    document.getElementById('nfId').value='';
+    document.getElementById('nfTitle').value='';
+    document.getElementById('nfContent').value='';
+    document.getElementById('nfCat').value='Publication';
+    document.getElementById('nfDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('nfAuthor').value='DrAL Lab';
+  }
+  openModal('nFormModal');
+}
+
+async function saveNews(){
+  const title=document.getElementById('nfTitle').value.trim();
+  const content=document.getElementById('nfContent').value.trim();
+  const date=document.getElementById('nfDate').value;
+  if(!title||!content||!date){alert('Title, Date, Content are required.');return}
+  const btn=document.getElementById('nfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('nfId').value||'0');
+  const obj={
+    id:id||nextId(D.news), title, content, date,
+    category:document.getElementById('nfCat').value,
+    author:document.getElementById('nfAuthor').value.trim()||'DrAL Lab',
+  };
+  if(id){const i=D.news.findIndex(n=>n.id===id);D.news[i]=obj;}
+  else{D.news.unshift(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save News';
+  closeModal('nFormModal'); rNews();
+}
+
+/* ══════════════════════════════════════════════════
+   DELETE CONFIRM
+══════════════════════════════════════════════════ */
+function confirmDelete(type,id){
+  const labels={member:'member',project:'project',rec:'posting',news:'news item'};
+  document.getElementById('confirmMsg').textContent=`Delete this ${labels[type]}?`;
+  document.getElementById('confirmOk').onclick=async()=>{
+    if(type==='member'){
+      D.members=D.members.filter(m=>m.id!==id);
+      D.projects.forEach(p=>{p.memberIds=p.memberIds.filter(mid=>mid!==id)});
+    } else if(type==='project'){
+      D.projects=D.projects.filter(p=>p.id!==id);
+    } else if(type==='rec'){
+      D.recruiting=D.recruiting.filter(r=>r.id!==id);
+    } else if(type==='news'){
+      D.news=D.news.filter(n=>n.id!==id);
+    }
+    await saveToFirebase();
+    closeModal('confirmModal');
+    renderAll();
+  };
+  openModal('confirmModal');
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER ALL
+══════════════════════════════════════════════════ */
+function renderAll(){
+  if(!D) return;
+  renderStats(); rMembers();
+  const active=document.querySelector('.page.on')?.id?.replace('page-','');
+  if(active==='projects') rProjects();
+  if(active==='recruiting') rRec();
+  if(active==='news') rNews();
+  if(active==='about') renderAbout();
+}
+
+/* ══════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════ */
+async function init(){
+  const loadScreen=document.getElementById('loadScreen');
+
+  if(!IS_CONFIGURED){
+    loadScreen.classList.add('hide');
+    setTimeout(()=>loadScreen.style.display='none',600);
+    document.getElementById('configNotice').classList.add('show');
+    return;
+  }
+
+  await loadFromFirebase();
+
+  loadScreen.classList.add('hide');
+  setTimeout(()=>loadScreen.style.display='none',600);
+
+  renderAll();
+  startRealtimeListener(); // live updates for all visitors
+}
+
+init();
 </script>
 </body>
 </html>
