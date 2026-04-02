@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrAL Lab — Design Research for Active Living @ Texas A&M</title>
+<meta name="description" content="Design Research for Active Living Lab at Texas A&M University. Research on built environment, physical activity, and community health.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════════════════ */
+:root {
+  --bg:         #f5f2ec;
+  --white:      #ffffff;
+  --green:      #2d4a3e;
+  --green-l:    #4a7c68;
+  --green-pale: #e8f4f0;
+  --gold:       #b8873f;
+  --gold-pale:  #fdf3e3;
+  --blue-pale:  #eff6ff;
+  --purple-pale:#f5f3ff;
+  --red:        #c0392b;
+  --text:       #1a1a1a;
+  --muted:      #6b7280;
+  --border:     #e0dbd2;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+img { display: block; max-width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════════ */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--green); height: 62px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 52px;
+  box-shadow: 0 2px 20px rgba(0,0,0,.2);
+}
+.nav-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem; font-weight: 600; color: #fff; letter-spacing: .02em;
+}
+.nav-brand span { color: #a5d4c4; }
+.nav-links { display: flex; gap: 4px; }
+.nbtn {
+  background: none; border: none; color: rgba(255,255,255,.7);
+  font-size: .85rem; padding: 8px 17px; border-radius: 6px; transition: all .2s;
+}
+.nbtn:hover, .nbtn.on { background: rgba(255,255,255,.14); color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════════════ */
+.hero {
+  background: linear-gradient(138deg, var(--green) 0%, #3d6b5a 50%, #4a7c68 100%);
+  color: #fff;
+  padding: 80px 52px 72px;
+  display: flex; align-items: center; justify-content: space-between; gap: 48px;
+}
+.hero-text h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3.4rem; font-weight: 600; line-height: 1.1;
+}
+.hero-text h1 em { font-style: italic; color: #a5d4c4; }
+.hero-text p {
+  margin-top: 16px; max-width: 460px;
+  font-size: .96rem; opacity: .85; line-height: 1.75;
+}
+.hero-cta { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--gold); color: #fff; border: none;
+  padding: 11px 26px; border-radius: 8px; font-size: .88rem; font-weight: 500;
+  transition: background .2s;
+}
+.btn-primary:hover { background: #9a6f30; }
+.btn-ghost {
+  background: none; color: rgba(255,255,255,.85);
+  border: 1.5px solid rgba(255,255,255,.35);
+  padding: 11px 24px; border-radius: 8px; font-size: .88rem;
+  transition: all .2s;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); }
+.hero-stats { display: flex; gap: 44px; flex-shrink: 0; }
+.stat { text-align: center; }
+.stat-n { font-family: 'Cormorant Garamond', serif; font-size: 2.7rem; font-weight: 600; color: #a5d4c4; line-height: 1; }
+.stat-l { font-size: .7rem; opacity: .7; text-transform: uppercase; letter-spacing: .09em; margin-top: 5px; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE LAYOUT
+═══════════════════════════════════════════════════════════ */
+.page { display: none; max-width: 1200px; margin: 0 auto; padding: 52px 48px; }
+.page.on { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION HEADER
+═══════════════════════════════════════════════════════════ */
+.sh { margin-bottom: 36px; }
+.sh h2 { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 600; color: var(--green); }
+.sh-line { width: 46px; height: 3px; background: var(--gold); border-radius: 2px; margin: 11px 0; }
+.sh p { font-size: .88rem; color: var(--muted); }
+
+/* ═══════════════════════════════════════════════════════════
+   FILTER BAR
+═══════════════════════════════════════════════════════════ */
+.fbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+.fbar input {
+  flex: 1; min-width: 200px; padding: 9px 15px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: inherit; font-size: .85rem; background: var(--white);
+  outline: none; transition: border-color .2s; color: var(--text);
+}
+.fbar input:focus { border-color: var(--green); }
+.fb {
+  padding: 8px 19px; border-radius: 20px;
+  border: 1.5px solid var(--border); background: var(--white);
+  font-size: .78rem; color: var(--text); transition: all .2s;
+}
+.fb:hover, .fb.on { background: var(--green); border-color: var(--green); color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════
+   MEMBER GRID
+═══════════════════════════════════════════════════════════ */
+.mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(192px, 1fr)); gap: 18px; }
+.mc {
+  background: var(--white); border-radius: 13px;
+  border: 1px solid var(--border); overflow: hidden;
+  cursor: pointer; transition: transform .25s, box-shadow .25s;
+}
+.mc:hover { transform: translateY(-5px); box-shadow: 0 14px 36px rgba(0,0,0,.1); }
+.mc-av {
+  height: 112px;
+  background: linear-gradient(135deg, var(--green-pale) 0%, var(--gold-pale) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 600; color: var(--green);
+}
+.mc-body { padding: 15px; }
+.mc-name { font-weight: 500; font-size: .92rem; }
+.mc-email { font-size: .7rem; color: var(--muted); margin-top: 3px; }
+.mc-adv { font-size: .68rem; color: var(--green-l); margin-top: 4px; }
+.rbadge {
+  display: inline-block; margin-top: 9px;
+  padding: 2px 11px; border-radius: 10px; font-size: .66rem; font-weight: 500;
+}
+.rb-f { background: var(--gold-pale);   color: var(--gold); }
+.rb-p { background: var(--green-pale);  color: var(--green); }
+.rb-d { background: var(--blue-pale);   color: #1e40af; }
+.rb-r { background: var(--purple-pale); color: #5b21b6; }
+.slink {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .68rem; color: #2563eb; margin-top: 6px;
+}
+.slink:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════
+   PROJECT GRID
+═══════════════════════════════════════════════════════════ */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(348px, 1fr)); gap: 22px; }
+.pc {
+  background: var(--white); border-radius: 14px;
+  border: 1px solid var(--border); overflow: hidden;
+  transition: transform .25s, box-shadow .25s;
+  display: flex; flex-direction: column;
+}
+.pc:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(0,0,0,.1); }
+.pc-head { padding: 24px 24px 0; flex: 1; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 11px; }
+.tag {
+  padding: 2px 12px; border-radius: 10px;
+  font-size: .67rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+}
+.t-Health    { background: #dcfce7; color: #166534; }
+.t-Mobility  { background: #dbeafe; color: #1e40af; }
+.t-Equity    { background: #fee2e2; color: #991b1b; }
+.t-UrbanDesign { background: #ede9fe; color: #5b21b6; }
+.t-Aging     { background: #fef3c7; color: #92400e; }
+.pc-title { font-family: 'Cormorant Garamond', serif; font-size: 1.28rem; font-weight: 600; line-height: 1.3; }
+.pc-desc { margin: 10px 0 18px; font-size: .82rem; color: var(--muted); line-height: 1.65; }
+.pc-body { padding: 0 24px 18px; }
+.team-lbl { font-size: .67rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px 3px 3px; font-size: .72rem;
+}
+.chip-av {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-pale), var(--gold-pale));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .55rem; color: var(--green); font-weight: 700;
+}
+.pc-foot {
+  border-top: 1px solid var(--border); padding: 13px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sdot { display: flex; align-items: center; gap: 7px; font-size: .75rem; color: var(--muted); }
+.dot  { width: 7px; height: 7px; border-radius: 50%; }
+.dot-a { background: #16a34a; }
+.dot-r { background: var(--gold); }
+.drive-btn {
+  display: flex; align-items: center; gap: 5px;
+  font-size: .72rem; background: none;
+  border: 1px solid var(--border); border-radius: 16px; padding: 4px 13px;
+  color: var(--muted); text-decoration: none; transition: all .2s;
+}
+.drive-btn:hover { border-color: #4285f4; color: #4285f4; }
+.drive-btn.na { opacity: .38; pointer-events: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   RECRUITING
+═══════════════════════════════════════════════════════════ */
+.rec-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 36px; }
+.rgrid { display: flex; flex-direction: column; gap: 15px; }
+.rc {
+  background: var(--white); border-radius: 13px;
+  border: 1px solid var(--border); border-left: 4px solid var(--green);
+  padding: 24px; transition: box-shadow .2s;
+}
+.rc:hover { box-shadow: 0 8px 28px rgba(0,0,0,.09); }
+.rc.urg { border-left-color: var(--red); }
+.rc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.rc-title { font-family: 'Cormorant Garamond', serif; font-size: 1.18rem; font-weight: 600; }
+.rc-proj  { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+.rc-badges { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+.rbg { padding: 3px 12px; border-radius: 10px; font-size: .7rem; font-weight: 500; }
+.rbg-t { background: var(--green-pale); color: var(--green); }
+.rbg-u { background: #fef2f2; color: var(--red); }
+.rc-desc { margin-top: 13px; font-size: .83rem; color: var(--muted); line-height: 1.65; }
+.rc-foot {
+  margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+.rc-meta { display: flex; flex-wrap: wrap; gap: 18px; }
+.rc-meta span { font-size: .77rem; color: var(--muted); }
+.apply {
+  background: var(--green); color: #fff; border: none;
+  padding: 9px 22px; border-radius: 8px; font-size: .79rem; font-weight: 500;
+  text-decoration: none; display: inline-block; transition: background .2s;
+}
+.apply:hover { background: var(--green-l); }
+
+/* ═══════════════════════════════════════════════════════════
+   MEMBER MODAL
+═══════════════════════════════════════════════════════════ */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.48); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: 18px;
+  max-width: 500px; width: 92%; padding: 40px;
+  position: relative; max-height: 88vh; overflow-y: auto;
+}
+.modal-x {
+  position: absolute; top: 16px; right: 20px;
+  background: none; border: none; font-size: 1.6rem; color: var(--muted);
+}
+.modal-x:hover { color: var(--text); }
+.m-av {
+  width: 74px; height: 74px; border-radius: 50%; margin-bottom: 20px;
+  background: linear-gradient(135deg, var(--green-pale), var(--gold-pale));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600; color: var(--green);
+}
+.modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; }
+.m-meta { font-size: .84rem; color: var(--muted); margin-top: 5px; }
+.m-bio  { font-size: .84rem; color: var(--text); line-height: 1.65; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.m-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mlink {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .79rem; padding: 6px 14px; border-radius: 20px;
+  border: 1px solid var(--border); color: var(--muted); transition: all .2s;
+}
+.mlink:hover { border-color: var(--green); color: var(--green); }
+.mlink.sc { border-color: #2563eb; color: #2563eb; }
+.mlink.sc:hover { background: #2563eb; color: #fff; }
+.m-projs { margin-top: 22px; }
+.m-projs h4 { font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 9px; }
+.pp {
+  display: inline-block; margin: 3px 3px 3px 0;
+  padding: 4px 13px; border-radius: 20px;
+  background: var(--green-pale); color: var(--green); font-size: .77rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════════════ */
+.empty { text-align: center; padding: 64px 0; color: var(--muted); }
+.empty-icon { font-size: 2.6rem; margin-bottom: 12px; }
+
+/* ═══════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════ */
+footer {
+  background: var(--green); color: rgba(255,255,255,.6);
+  padding: 36px 52px; font-size: .8rem; text-align: center; margin-top: 80px;
+}
+footer strong { color: rgba(255,255,255,.9); }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-brand { font-size: 1.2rem; }
+  .hero { flex-direction: column; padding: 48px 20px; gap: 32px; }
+  .hero-text h1 { font-size: 2.2rem; }
+  .hero-stats { gap: 28px; }
+  .page { padding: 32px 18px; }
+  .pgrid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Dr<span>AL</span> Lab</div>
+  <div class="nav-links">
+    <button class="nbtn on" onclick="goto('members',this)">Members</button>
+    <button class="nbtn" onclick="goto('projects',this)">Projects</button>
+    <button class="nbtn" onclick="goto('recruiting',this)">Recruiting</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <h1>Design Research<br>for <em>Active Living</em></h1>
+    <p>We study how the built environment shapes physical activity, health, and well-being — with a commitment to equity, evidence-based design, and community health.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="goto('recruiting', document.querySelector('.nbtn:last-child'))">View Open Positions</button>
+      <button class="btn-ghost"   onclick="goto('projects',  document.querySelectorAll('.nbtn')[1])">Our Research</button>
+    </div>
+  </div>
+  <div class="hero-stats" id="heroStats"></div>
+</div>
+
+<!-- MEMBERS PAGE -->
+<div id="page-members" class="page on">
+  <div class="sh">
+    <h2>Lab Members</h2><div class="sh-line"></div>
+    <p>Faculty, researchers, and graduate students advancing active living research.</p>
+  </div>
+  <div class="fbar">
+    <input type="text" id="ms" placeholder="Search members…" oninput="rMembers()">
+    <button class="fb on"  onclick="mf('all',this)">All</button>
+    <button class="fb"     onclick="mf('Faculty',this)">Faculty</button>
+    <button class="fb"     onclick="mf('PhD Student',this)">PhD Students</button>
+    <button class="fb"     onclick="mf('Post Doc',this)">Post Docs</button>
+    <button class="fb"     onclick="mf('Researcher',this)">Researchers</button>
+  </div>
+  <div class="mgrid" id="mGrid"></div>
+</div>
+
+<!-- PROJECTS PAGE -->
+<div id="page-projects" class="page">
+  <div class="sh">
+    <h2>Research Projects</h2><div class="sh-line"></div>
+    <p>Ongoing investigations across built environment, health equity, and active transportation.</p>
+  </div>
+  <div class="fbar">
+    <input type="text" id="ps" placeholder="Search projects…" oninput="rProjects()">
+    <button class="fb on"  onclick="pf('all',this)">All</button>
+    <button class="fb"     onclick="pf('Health',this)">Health</button>
+    <button class="fb"     onclick="pf('Mobility',this)">Mobility</button>
+    <button class="fb"     onclick="pf('Equity',this)">Equity</button>
+    <button class="fb"     onclick="pf('Urban Design',this)">Urban Design</button>
+    <button class="fb"     onclick="pf('Aging',this)">Aging</button>
+  </div>
+  <div class="pgrid" id="pGrid"></div>
+</div>
+
+<!-- RECRUITING PAGE -->
+<div id="page-recruiting" class="page">
+  <div class="rec-head">
+    <div><h2>Open Positions</h2><div class="sh-line"></div></div>
+  </div>
+  <div class="fbar">
+    <input type="text" id="rs" placeholder="Search positions…" oninput="rRec()">
+    <button class="fb on"  onclick="rf('all',this)">All</button>
+    <button class="fb"     onclick="rf('PhD Position',this)">PhD</button>
+    <button class="fb"     onclick="rf('Postdoc',this)">Postdoc</button>
+    <button class="fb"     onclick="rf('RA',this)">RA</button>
+    <button class="fb"     onclick="rf('Undergraduate',this)">Undergraduate</button>
+  </div>
+  <div class="rgrid" id="rGrid"></div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>DrAL Lab</strong> · Design Research for Active Living · Texas A&M University<br>
+  <span style="margin-top:5px;display:block">Department of Landscape Architecture & Urban Planning · College of Architecture</span>
+</footer>
+
+<!-- MEMBER MODAL -->
+<div class="overlay" id="mModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()">×</button>
+    <div class="m-av" id="mAv"></div>
+    <h3 id="mName"></h3>
+    <div class="m-meta"  id="mMeta"></div>
+    <div class="m-bio"   id="mBio" style="display:none"></div>
+    <div class="m-links" id="mLinks"></div>
+    <div class="m-projs" id="mProjs"></div>
+  </div>
+</div>
+
+<!-- DATA + LOGIC -->
+<script src="data.js"></script>
+<script>
+/* ── helpers ─────────────────────────────────────────────── */
+const D   = window.LAB_DATA;
+const ini = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+const gm  = id => D.members.find(m=>m.id===id);
+const gp  = id => D.projects.find(p=>p.id===id);
+const fmt = s  => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
+const rb  = r  => ({Faculty:'rb-f','PhD Student':'rb-p','Post Doc':'rb-d',Researcher:'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
+
+/* ── state ───────────────────────────────────────────────── */
+let mFilter='all', pFilter='all', rFilter='all';
+
+/* ── nav ─────────────────────────────────────────────────── */
+function goto(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('page-'+name).classList.add('on');
+  if(btn) btn.classList.add('on');
+  if(name==='projects')  rProjects();
+  if(name==='recruiting') rRec();
+}
+
+/* ── HERO STATS ──────────────────────────────────────────── */
+(function(){
+  const active = D.members.filter(m=>m.status==='Active').length;
+  document.getElementById('heroStats').innerHTML = [
+    [active+'+','Members'],
+    [D.projects.length,'Projects'],
+    [D.members.filter(m=>m.role==='Faculty').length,'Faculty'],
+  ].map(([n,l])=>`<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`).join('');
+})();
+
+/* ── MEMBERS ─────────────────────────────────────────────── */
+function mf(f,btn){mFilter=f;document.querySelectorAll('#page-members .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rMembers()}
+
+function rMembers(){
+  const q=document.getElementById('ms').value.toLowerCase();
+  const list=D.members.filter(m=>
+    m.status==='Active' &&
+    (mFilter==='all'||m.role===mFilter) &&
+    (!q||m.name.toLowerCase().includes(q)||(m.advisor||'').toLowerCase().includes(q))
+  );
+  const g=document.getElementById('mGrid');
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><p>No members found.</p></div>`;return}
+  g.innerHTML=list.map(m=>`
+    <div class="mc" onclick="openM(${m.id})">
+      <div class="mc-av">${ini(m.name)}</div>
+      <div class="mc-body">
+        <div class="mc-name">${m.name}</div>
+        <div class="mc-email">${m.email}</div>
+        ${m.advisor?`<div class="mc-adv">Advisor: ${m.advisor}</div>`:''}
+        <span class="rbadge ${rb(m.role)}">${m.role}</span>
+        ${m.scholar?`<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Google Scholar</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function openM(id){
+  const m=gm(id);
+  document.getElementById('mAv').textContent=ini(m.name);
+  document.getElementById('mName').textContent=m.name;
+  document.getElementById('mMeta').textContent=m.role+(m.advisor?' · Advisor: '+m.advisor:'');
+  const bio=document.getElementById('mBio');
+  if(m.bio){bio.textContent=m.bio;bio.style.display='block'}else{bio.style.display='none'}
+  const links=[`<a class="mlink" href="mailto:${m.email}">✉ ${m.email}</a>`];
+  if(m.scholar) links.push(`<a class="mlink sc" href="${m.scholar}" target="_blank">🎓 Google Scholar</a>`);
+  if(m.tamu)    links.push(`<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>`);
+  document.getElementById('mLinks').innerHTML=links.join('');
+  const projs=D.projects.filter(p=>p.memberIds.includes(id));
+  document.getElementById('mProjs').innerHTML=projs.length
+    ?`<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}`:'';
+  document.getElementById('mModal').classList.add('open');
+}
+function closeModal(){document.getElementById('mModal').classList.remove('open')}
+
+/* ── PROJECTS ────────────────────────────────────────────── */
+function pf(f,btn){pFilter=f;document.querySelectorAll('#page-projects .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rProjects()}
+
+function rProjects(){
+  const q=document.getElementById('ps').value.toLowerCase();
+  const list=D.projects.filter(p=>
+    (pFilter==='all'||p.tags.includes(pFilter)) &&
+    (!q||p.title.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q))
+  );
+  const g=document.getElementById('pGrid');
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
+  g.innerHTML=list.map(p=>{
+    const chips=p.memberIds.map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}</div>`:''}).join('');
+    const tags=p.tags.map(t=>`<span class="tag t-${t.replace(' ','')}">${t}</span>`).join('');
+    const drv=p.driveUrl
+      ?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">📁 Drive Folder</a>`
+      :`<span class="drive-btn na">📁 Not linked</span>`;
+    return `
+    <div class="pc">
+      <div class="pc-head">
+        <div class="tags">${tags}</div>
+        <div class="pc-title">${p.title}</div>
+        <p class="pc-desc">${p.desc}</p>
+      </div>
+      <div class="pc-body">
+        <div class="team-lbl">Team (${p.memberIds.length})</div>
+        <div class="chips">${chips}</div>
+      </div>
+      <div class="pc-foot">
+        <div class="sdot"><div class="dot ${p.recruiting?'dot-r':'dot-a'}"></div><span>${p.recruiting?'Recruiting':'Active'}</span></div>
+        ${drv}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── RECRUITING ──────────────────────────────────────────── */
+function rf(f,btn){rFilter=f;document.querySelectorAll('#page-recruiting .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rRec()}
+
+function rRec(){
+  const q=document.getElementById('rs').value.toLowerCase();
+  const list=D.recruiting.filter(r=>
+    r.status==='Open' &&
+    (rFilter==='all'||r.type===rFilter) &&
+    (!q||r.title.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q))
+  );
+  const g=document.getElementById('rGrid');
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>No open positions at this time.</p></div>`;return}
+  g.innerHTML=list.map(r=>{
+    const proj=gp(r.projectId);
+    return `
+    <div class="rc ${r.urgent?'urg':''}">
+      <div class="rc-top">
+        <div>
+          <div class="rc-title">${r.title}</div>
+          <div class="rc-proj">${proj?proj.title:''}</div>
+        </div>
+        <div class="rc-badges">
+          <span class="rbg rbg-t">${r.type}</span>
+          ${r.urgent?'<span class="rbg rbg-u">Urgent</span>':''}
+        </div>
+      </div>
+      <div class="rc-desc">${r.desc}</div>
+      <div class="rc-foot">
+        <div class="rc-meta">
+          <span>📅 ${fmt(r.deadline)}</span>
+          ${r.funding?`<span>💰 ${r.funding}</span>`:''}
+          <span>📬 ${r.contactEmail}</span>
+        </div>
+        <a class="apply" href="mailto:${r.contactEmail}?subject=Application: ${encodeURIComponent(r.title)}">Apply / Contact</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── INIT ────────────────────────────────────────────────── */
+rMembers();
+</script>
+</body>
+</html>
