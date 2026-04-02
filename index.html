@@ -594,8 +594,7 @@ const FIREBASE_CONFIG = {
 <!-- ═══ DATA + FIREBASE ═══ -->
 <script src="data.js"></script>
 /* ══════════════════════════════════════════════════
-   ▼▼▼  여기에 Firebase 설정값을 붙여넣으세요  ▼▼▼
-   FIREBASE_SETUP.md 파일의 3단계를 참고하세요.
+   Firebase 설정
 ══════════════════════════════════════════════════ */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBGR0xDhOwLgiL94yYp6vpYGejLDLTGd8I",
@@ -607,11 +606,7 @@ const FIREBASE_CONFIG = {
   appId: "1:173883013986:web:3f682659cbb7170ef28a3b",
   measurementId: "G-9NPCG61CDH"
 };
-/* ▲▲▲ 설정값 붙여넣기 끝 ▲▲▲ */
 
-/* ══════════════════════════════════════════════════
-   비밀번호 변경: btoa("새비밀번호") 로 계산 후 교체
-══════════════════════════════════════════════════ */
 const PW_HASH = btoa('dral2026');
 
 /* ══════════════════════════════════════════════════
@@ -619,7 +614,6 @@ const PW_HASH = btoa('dral2026');
 ══════════════════════════════════════════════════ */
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 let db, DOC_REF;
-
 if(IS_CONFIGURED) {
   firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
@@ -638,20 +632,16 @@ let _pickedMemberIds = [];
 /* ══════════════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════════════ */
-const ini  = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-const gm   = id => D.members.find(m=>m.id===id);
-const gp   = id => D.projects.find(p=>p.id===id);
-const fmt  = s => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
-const rb   = r => ({'Faculty':'rb-f','PhD Student':'rb-p','Post Doc':'rb-d','Researcher':'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
+const ini = n => n ? n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase() : '??';
+const gm = id => D.members.find(m=>m.id===id);
+const gp = id => D.projects.find(p=>p.id===id);
+const fmt = s => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
+const rb = r => ({'Faculty':'rb-f','PhD Student':'rb-p','Post Doc':'rb-d','Researcher':'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
 const nextId = arr => arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1;
 
 function closeModal(id){ document.getElementById(id).classList.remove('open') }
 function openModal(id) { document.getElementById(id).classList.add('open') }
-
-function setLoading(msg){
-  document.getElementById('loadMsg').textContent = msg;
-}
-
+function setLoading(msg){ document.getElementById('loadMsg').textContent = msg; }
 function showSaved(){
   const el = document.getElementById('saveIndicator');
   el.classList.add('show');
@@ -668,14 +658,12 @@ async function loadFromFirebase() {
     if(snap.exists) {
       D = snap.data();
     } else {
-      // First time: seed data to Firebase
       setLoading('Setting up database (first time)…');
       D = JSON.parse(JSON.stringify(window.SEED_DATA));
       await DOC_REF.set(D);
     }
   } catch(e) {
     console.error('Firebase error:', e);
-    // Fallback to seed data if offline
     D = JSON.parse(JSON.stringify(window.SEED_DATA));
   }
 }
@@ -691,7 +679,6 @@ async function saveToFirebase() {
   }
 }
 
-// Real-time listener: when data changes in Firebase, update all visitors
 function startRealtimeListener() {
   if(!IS_CONFIGURED) return;
   DOC_REF.onSnapshot(snap => {
@@ -710,10 +697,10 @@ function goto(name, btn) {
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+name).classList.add('on');
   if(btn) btn.classList.add('on');
-  if(name==='about')    renderAbout();
+  if(name==='about') renderAbout();
   if(name==='projects') rProjects();
   if(name==='recruiting') rRec();
-  if(name==='news')     rNews();
+  if(name==='news') rNews();
 }
 
 /* ══════════════════════════════════════════════════
@@ -762,12 +749,12 @@ function checkPw(){
 function renderStats(){
   if(!D) return;
   const active=D.members.filter(m=>m.status==='Active').length;
-  document.getElementById('heroStats').innerHTML=[
+  document.getElementById('heroStats').innerHTML = [
     [active+'+','Members'],
     [D.projects.length,'Projects'],
     [D.members.filter(m=>m.role==='Faculty').length,'Faculty'],
   ].map(([n,l])=>`<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`).join('');
-  document.getElementById('heroDesc').textContent=D.about.description;
+  document.getElementById('heroDesc').textContent = D.about.description;
 }
 
 /* ══════════════════════════════════════════════════
@@ -776,11 +763,11 @@ function renderStats(){
 function renderAbout(){
   if(!D) return;
   const a=D.about;
-  document.getElementById('aboutTagline').textContent=a.tagline;
-  document.getElementById('aboutDesc2').textContent=a.description;
-  document.getElementById('aboutMission').textContent=a.mission;
-  document.getElementById('contactLink').href='mailto:'+a.contact;
-  document.getElementById('aboutCards').innerHTML=[
+  document.getElementById('aboutTagline').textContent = a.tagline;
+  document.getElementById('aboutDesc2').textContent = a.description;
+  document.getElementById('aboutMission').textContent = a.mission;
+  document.getElementById('contactLink').href = 'mailto:'+a.contact;
+  document.getElementById('aboutCards').innerHTML = [
     ['🏫','Texas A&M','University'],
     ['👥',D.members.filter(m=>m.status==='Active').length+'+','Active Members'],
     ['🔬',D.projects.length,'Research Projects'],
@@ -791,18 +778,19 @@ function renderAbout(){
 
 function openAboutEdit(){
   const a=D.about;
-  document.getElementById('afTagline').value=a.tagline;
-  document.getElementById('afDesc').value=a.description;
-  document.getElementById('afMission').value=a.mission;
-  document.getElementById('afContact').value=a.contact;
+  document.getElementById('afTagline').value = a.tagline;
+  document.getElementById('afDesc').value = a.description;
+  document.getElementById('afMission').value = a.mission;
+  document.getElementById('afContact').value = a.contact;
   openModal('aboutModal');
 }
+
 async function saveAbout(){
-  D.about={
-    tagline:     document.getElementById('afTagline').value.trim(),
+  D.about = {
+    tagline: document.getElementById('afTagline').value.trim(),
     description: document.getElementById('afDesc').value.trim(),
-    mission:     document.getElementById('afMission').value.trim(),
-    contact:     document.getElementById('afContact').value.trim(),
+    mission: document.getElementById('afMission').value.trim(),
+    contact: document.getElementById('afContact').value.trim(),
   };
   await saveToFirebase();
   closeModal('aboutModal');
@@ -812,116 +800,134 @@ async function saveAbout(){
 /* ══════════════════════════════════════════════════
    MEMBERS
 ══════════════════════════════════════════════════ */
-function mf(f,btn){mFilter=f;document.querySelectorAll('#page-members .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rMembers()}
+function mf(f,btn){
+  mFilter=f;
+  document.querySelectorAll('#page-members .fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  rMembers();
+}
 
 function rMembers(){
   if(!D) return;
-  const q=document.getElementById('ms').value.toLowerCase();
-  const list=D.members.filter(m=>
-    m.status==='Active'&&
-    (mFilter==='all'||m.role===mFilter)&&
-    (!q||m.name.toLowerCase().includes(q)||(m.advisor||'').toLowerCase().includes(q))
+  const q = document.getElementById('ms').value.toLowerCase();
+  const list = D.members.filter(m =>
+    m.status==='Active' &&
+    (mFilter==='all' || m.role===mFilter) &&
+    (!q || m.name.toLowerCase().includes(q) || (m.advisor||'').toLowerCase().includes(q))
   );
-  const g=document.getElementById('mGrid');
-  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><p>No members found.</p></div>`;return}
-  g.innerHTML=list.map(m=>`
+  const g = document.getElementById('mGrid');
+  if(!list.length){
+    g.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><p>No members found.</p></div>`;
+    return;
+  }
+  g.innerHTML = list.map(m => `
     <div class="mc" onclick="openMemberView(${m.id})">
       <div class="card-admin" onclick="event.stopPropagation()">
         <button class="ica ica-edit" onclick="openMemberForm(${m.id})">✏️</button>
-        <button class="ica ica-del"  onclick="confirmDelete('member',${m.id})">🗑</button>
+        <button class="ica ica-del" onclick="confirmDelete('member',${m.id})">🗑</button>
       </div>
       <div class="mc-av">${ini(m.name)}</div>
       <div class="mc-body">
         <div class="mc-name">${m.name}</div>
         <div class="mc-email">${m.email}</div>
-        ${m.advisor?`<div class="mc-adv">Advisor: ${m.advisor}</div>`:''}
+        ${m.advisor ? `<div class="mc-adv">Advisor: ${m.advisor}</div>` : ''}
         <span class="rbadge ${rb(m.role)}">${m.role}</span>
-        ${m.scholar?`<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Scholar</a>`:''}
+        ${m.scholar ? `<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Scholar</a>` : ''}
       </div>
     </div>`).join('');
 }
 
 function openMemberView(id){
-  _viewMemberId=id;
-  const m=gm(id);
-  document.getElementById('mvAv').textContent=ini(m.name);
-  document.getElementById('mvName').textContent=m.name;
-  document.getElementById('mvMeta').textContent=m.role+(m.advisor?' · Advisor: '+m.advisor:'');
-  const bio=document.getElementById('mvBio');
-  m.bio?(bio.textContent=m.bio,bio.style.display='block'):bio.style.display='none';
-  document.getElementById('mvLinks').innerHTML=[
+  _viewMemberId = id;
+  const m = gm(id);
+  document.getElementById('mvAv').textContent = ini(m.name);
+  document.getElementById('mvName').textContent = m.name;
+  document.getElementById('mvMeta').textContent = m.role + (m.advisor ? ' · Advisor: '+m.advisor : '');
+  const bio = document.getElementById('mvBio');
+  if(m.bio) { bio.textContent = m.bio; bio.style.display = 'block'; }
+  else { bio.style.display = 'none'; }
+  document.getElementById('mvLinks').innerHTML = [
     `<a class="mlink" href="mailto:${m.email}">✉ ${m.email}</a>`,
-    m.scholar?`<a class="mlink sc" href="${m.scholar}" target="_blank">🎓 Google Scholar</a>`:'',
-    m.tamu?`<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>`:'',
+    m.scholar ? `<a class="mlink sc" href="${m.scholar}" target="_blank">🎓 Google Scholar</a>` : '',
+    m.tamu ? `<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>` : '',
   ].join('');
-  const projs=D.projects.filter(p=>p.memberIds.includes(id));
-  document.getElementById('mvProjs').innerHTML=projs.length?`<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}`:'';
-  document.getElementById('mvAdminActions').style.display=isAdmin?'flex':'none';
+  const projs = D.projects.filter(p => p.memberIds.includes(id));
+  document.getElementById('mvProjs').innerHTML = projs.length ? `<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}` : '';
+  document.getElementById('mvAdminActions').style.display = isAdmin ? 'flex' : 'none';
   openModal('mViewModal');
 }
-function editMemberFromView(){closeModal('mViewModal');openMemberForm(_viewMemberId)}
-function deleteMemberFromView(){closeModal('mViewModal');confirmDelete('member',_viewMemberId)}
+
+function editMemberFromView(){ closeModal('mViewModal'); openMemberForm(_viewMemberId); }
+function deleteMemberFromView(){ closeModal('mViewModal'); confirmDelete('member',_viewMemberId); }
 
 function openMemberForm(id=null){
-  document.getElementById('mFormTitle').textContent=id?'Edit Member':'Add Member';
+  document.getElementById('mFormTitle').textContent = id ? 'Edit Member' : 'Add Member';
   if(id){
-    const m=gm(id);
-    document.getElementById('mfId').value=m.id;
-    document.getElementById('mfName').value=m.name;
-    document.getElementById('mfRole').value=m.role;
-    document.getElementById('mfEmail').value=m.email;
-    document.getElementById('mfAdvisor').value=m.advisor||'';
-    document.getElementById('mfStatus').value=m.status;
-    document.getElementById('mfScholar').value=m.scholar||'';
-    document.getElementById('mfTamu').value=m.tamu||'';
-    document.getElementById('mfBio').value=m.bio||'';
+    const m = gm(id);
+    document.getElementById('mfId').value = m.id;
+    document.getElementById('mfName').value = m.name;
+    document.getElementById('mfRole').value = m.role;
+    document.getElementById('mfEmail').value = m.email;
+    document.getElementById('mfAdvisor').value = m.advisor || '';
+    document.getElementById('mfStatus').value = m.status;
+    document.getElementById('mfScholar').value = m.scholar || '';
+    document.getElementById('mfTamu').value = m.tamu || '';
+    document.getElementById('mfBio').value = m.bio || '';
   } else {
     ['mfId','mfName','mfEmail','mfAdvisor','mfScholar','mfTamu','mfBio'].forEach(f=>document.getElementById(f).value='');
-    document.getElementById('mfRole').value='PhD Student';
-    document.getElementById('mfStatus').value='Active';
+    document.getElementById('mfRole').value = 'PhD Student';
+    document.getElementById('mfStatus').value = 'Active';
   }
   openModal('mFormModal');
 }
 
 async function saveMember(){
-  const name=document.getElementById('mfName').value.trim();
-  const email=document.getElementById('mfEmail').value.trim();
-  if(!name||!email){alert('Name and Email are required.');return}
-  const btn=document.getElementById('mfSaveBtn');
-  btn.disabled=true; btn.textContent='Saving…';
-  const id=parseInt(document.getElementById('mfId').value||'0');
-  const obj={
-    id:id||nextId(D.members), name, email,
-    role:document.getElementById('mfRole').value,
-    status:document.getElementById('mfStatus').value,
-    advisor:document.getElementById('mfAdvisor').value.trim()||null,
-    scholar:document.getElementById('mfScholar').value.trim()||null,
-    tamu:document.getElementById('mfTamu').value.trim()||null,
-    bio:document.getElementById('mfBio').value.trim()||null,
+  const name = document.getElementById('mfName').value.trim();
+  const email = document.getElementById('mfEmail').value.trim();
+  if(!name || !email){ alert('Name and Email are required.'); return; }
+  const btn = document.getElementById('mfSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const id = parseInt(document.getElementById('mfId').value || '0');
+  const obj = {
+    id: id || nextId(D.members), name, email,
+    role: document.getElementById('mfRole').value,
+    status: document.getElementById('mfStatus').value,
+    advisor: document.getElementById('mfAdvisor').value.trim() || null,
+    scholar: document.getElementById('mfScholar').value.trim() || null,
+    tamu: document.getElementById('mfTamu').value.trim() || null,
+    bio: document.getElementById('mfBio').value.trim() || null,
   };
-  if(id){const i=D.members.findIndex(m=>m.id===id);D.members[i]=obj;}
-  else{D.members.push(obj);}
+  if(id){ const i = D.members.findIndex(m=>m.id===id); D.members[i] = obj; }
+  else { D.members.push(obj); }
   await saveToFirebase();
-  btn.disabled=false; btn.textContent='Save Member';
+  btn.disabled = false; btn.textContent = 'Save Member';
   closeModal('mFormModal'); rMembers(); renderStats();
 }
 
 /* ══════════════════════════════════════════════════
    PROJECTS
 ══════════════════════════════════════════════════ */
-function pf(f,btn){pFilter=f;document.querySelectorAll('#page-projects .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rProjects()}
+function pf(f,btn){
+  pFilter = f;
+  document.querySelectorAll('#page-projects .fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  rProjects();
+}
 
 function rProjects(){
   if(!D) return;
-  const q=document.getElementById('ps').value.toLowerCase();
-  const list=D.projects.filter(p=>
-    (pFilter==='all'||p.tags.includes(pFilter))&&
-    (!q||p.title.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q))
+  const q = document.getElementById('ps').value.toLowerCase();
+  const list = D.projects.filter(p =>
+    (pFilter==='all' || p.tags.includes(pFilter)) &&
+    (!q || p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q))
   );
-  const g=document.getElementById('pGrid');
-  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
-  g.innerHTML=list.map(p=>{
-    const tags=p.tags.map(t=>`<span class="tag t-${t.replace(' ','')}">${t}</span>`).join('');
+  const g = document.getElementById('pGrid');
+  if(!list.length){
+    g.innerHTML = `<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;
+    return;
+  }
+  g.innerHTML = list.map(p => {
+    const tags = p.tags.map(t => `<span class="tag t-${t.replace(' ','')}">${t}</span>`).
     const chips=p.memberIds.map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
     const drv=p.driveUrl?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">📁 Drive</a>`:`<span class="drive-btn na">📁 Not linked</span>`;
     return `
