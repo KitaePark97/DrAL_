@@ -200,8 +200,29 @@ nav{
 .news-body{font-size:.86rem;color:var(--muted);line-height:1.7}
 .news-author{font-size:.76rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 .news-content-row{display:flex;gap:16px;align-items:flex-start}
-.news-thumb{width:96px;height:80px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.news-thumb{width:130px;height:110px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
 .news-content-col{flex:1;min-width:0}
+/* ── Carousel ─────────────────────────────── */
+.carousel{position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--border)}
+.carousel-track{display:flex;transition:transform .38s ease}
+.carousel-slide{min-width:100%;flex-shrink:0}
+.carousel-slide img{width:100%;display:block;object-fit:cover}
+.carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;z-index:2;transition:background .2s}
+.carousel-btn:hover{background:rgba(0,0,0,.7)}
+.carousel-btn.prev{left:6px}
+.carousel-btn.next{right:6px}
+.carousel-dots-row{display:flex;justify-content:center;gap:5px;padding:6px 0 2px}
+.carousel-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:background .2s}
+.carousel-dot.on{background:var(--green)}
+/* News carousel: left side, fixed height */
+.news-carousel{width:150px;flex-shrink:0}
+.news-carousel .carousel-slide img{height:120px;object-fit:cover}
+/* Project carousel: square 1:1 */
+.proj-carousel .carousel-slide img{aspect-ratio:1/1;height:auto}
+/* Hero photo box */
+.hero-photo-box{flex-shrink:0}
+.hero-photo-box img{width:210px;height:210px;object-fit:cover;border-radius:14px;border:3px solid rgba(255,255,255,.2);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+@media(max-width:768px){.hero-photo-box img{width:150px;height:150px}}
 .news-body.collapsed{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .news-read-more{background:none;border:none;color:var(--green-l);font-size:.79rem;padding:0;margin-top:6px;cursor:pointer;font-family:inherit}
 .news-read-more:hover{text-decoration:underline}
@@ -379,7 +400,12 @@ const FIREBASE_CONFIG = {
       <button class="btn-ghost" onclick="goto('projects',document.querySelectorAll('.nbtn')[2])">Our Research</button>
     </div>
   </div>
-  <div class="hero-stats" id="heroStats"></div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:22px;flex-shrink:0">
+    <div id="heroPhotoBox" class="hero-photo-box" style="display:none">
+      <img id="heroPhotoImg" src="" alt="Lab Photo">
+    </div>
+    <div class="hero-stats" id="heroStats"></div>
+  </div>
   <!-- Background nav dots -->
   <div class="hero-bg-controls" id="heroDots"></div>
 </div>
@@ -581,11 +607,14 @@ const FIREBASE_CONFIG = {
       <div class="fg"><label>Status</label><select id="pfStatus"><option>Active</option><option>Completed</option><option>Paused</option></select></div>
     </div>
     <div class="fg"><label>Link URL</label><input id="pfDrive" type="url" placeholder="https://…"></div>
-    <div class="fg"><label>Photo / Cover Image</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="pfPhoto" type="url" placeholder="https://… (image URL)">
-        <label style="text-transform:none;letter-spacing:0;font-size:.78rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap">
-          📁 Upload<input type="file" accept="image/*" onchange="handleProjPhotoUpload(this)" style="display:none">
+    <div class="fg">
+      <label>Photos (1:1) <span style="font-weight:400;color:var(--muted)">(여러 장 추가 가능)</span></label>
+      <div id="pfPhotoList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="pfPhotoUrl" type="url" placeholder="https://… (URL 입력)" style="flex:1;min-width:140px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+        <button type="button" onclick="addProjPhotoUrl()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.82rem;cursor:pointer;white-space:nowrap">+ URL</button>
+        <label style="font-size:.82rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap;display:flex;align-items:center">
+          📁 Upload<input type="file" accept="image/*" multiple onchange="addProjPhotoFiles(this)" style="display:none">
         </label>
       </div>
     </div>
@@ -657,11 +686,14 @@ const FIREBASE_CONFIG = {
       <div class="fg"><label>Date *</label><input id="nfDate" type="date"></div>
     </div>
     <div class="fg"><label>Content *</label><textarea id="nfContent" style="min-height:110px"></textarea></div>
-    <div class="fg"><label>Photo URL</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="nfPhoto" type="url" placeholder="https://… (image URL)">
-        <label style="text-transform:none;letter-spacing:0;font-size:.78rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap">
-          📁 Upload<input type="file" accept="image/*" onchange="handleNewsPhotoUpload(this)" style="display:none">
+    <div class="fg">
+      <label>Photos <span style="font-weight:400;color:var(--muted)">(여러 장 추가 가능)</span></label>
+      <div id="nfPhotoList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="nfPhotoUrl" type="url" placeholder="https://… (URL 입력)" style="flex:1;min-width:160px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+        <button type="button" onclick="addNewsPhotoUrl()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.82rem;cursor:pointer;white-space:nowrap">+ URL</button>
+        <label style="text-transform:none;letter-spacing:0;font-size:.82rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap;display:flex;align-items:center">
+          📁 Upload<input type="file" accept="image/*" multiple onchange="addNewsPhotoFiles(this)" style="display:none">
         </label>
       </div>
     </div>
@@ -765,14 +797,36 @@ const FIREBASE_CONFIG = {
       </div>
     </div>
 
-    <!-- Text color (shared) -->
-    <div class="fg" style="margin-top:4px;padding-top:16px;border-top:1px solid var(--border)">
-      <label>Hero Text Color</label>
-      <div style="display:flex;gap:10px;align-items:center">
-        <input type="color" id="bgTextColor" value="#ffffff" style="width:50px;height:38px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;padding:2px">
-        <input type="text"  id="bgTextHex"   value="#ffffff" placeholder="#ffffff" style="width:110px;padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:monospace;font-size:.9rem;outline:none" oninput="syncTextColorFromHex()">
-        <button class="add-btn" style="background:#555" onclick="applyTextColor()">Apply</button>
-        <button onclick="resetTextColor()" style="background:none;border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:.78rem;cursor:pointer;color:var(--muted)">Reset White</button>
+    <!-- Text / Accent colors (shared) -->
+    <div style="margin-top:4px;padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="display:block;font-size:.77rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:7px">Hero Text Color</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="color" id="bgTextColor" value="#ffffff" style="width:44px;height:36px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;padding:2px" oninput="document.getElementById('bgTextHex').value=this.value">
+          <input type="text"  id="bgTextHex"   value="#ffffff" placeholder="#ffffff" style="width:100px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:monospace;font-size:.88rem;outline:none" oninput="syncTextColorFromHex()">
+          <button onclick="applyTextColor()" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.8rem;cursor:pointer">Apply</button>
+          <button onclick="resetTextColor()" style="background:none;border:1px solid var(--border);padding:7px 11px;border-radius:8px;font-size:.78rem;cursor:pointer;color:var(--muted)">↺ White</button>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.77rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:7px">Accent Color <span style="text-transform:none;font-weight:400">(숫자·Active Living 색상)</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="color" id="bgAccentColor" value="#a5d4c4" style="width:44px;height:36px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;padding:2px" oninput="document.getElementById('bgAccentHex').value=this.value">
+          <input type="text"  id="bgAccentHex"   value="#a5d4c4" placeholder="#a5d4c4" style="width:100px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:monospace;font-size:.88rem;outline:none" oninput="syncAccentColorFromHex()">
+          <button onclick="applyAccentColor()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.8rem;cursor:pointer">Apply</button>
+          <button onclick="resetAccentColor()" style="background:none;border:1px solid var(--border);padding:7px 11px;border-radius:8px;font-size:.78rem;cursor:pointer;color:var(--muted)">↺ Default</button>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:.77rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:7px">Hero Photo <span style="text-transform:none;font-weight:400">(우측 1:1 사진 — optional)</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="bgHeroPhotoUrl" type="url" placeholder="https://… 또는 아래서 파일 업로드" style="flex:1;min-width:160px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+          <label style="font-size:.8rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap">
+            📁<input type="file" accept="image/*" onchange="uploadHeroPhoto(this)" style="display:none">
+          </label>
+          <button onclick="applyHeroPhoto()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.8rem;cursor:pointer">Apply</button>
+          <button onclick="removeHeroPhoto()" style="background:none;border:1px solid var(--border);padding:7px 11px;border-radius:8px;font-size:.78rem;cursor:pointer;color:var(--muted)">✕ Remove</button>
+        </div>
       </div>
     </div>
 
@@ -1345,8 +1399,8 @@ function rProjects(){
         <div class="tags">${tags}</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1">
-            ${p.photoUrl?`<img src="${p.photoUrl}" style="width:100%;height:80px;object-fit:cover;border-radius:7px;margin-bottom:9px;border:1px solid var(--border)" alt="" loading="lazy">`:''}
-            <div class="pc-title">${p.title}</div>
+            ${(()=>{const photos=[...(p.photos||[]),...(p.photoUrl&&!p.photos?[p.photoUrl]:[])].filter(Boolean);return photos.length?buildCarousel(photos,'p'+p.id,'proj-carousel'):'';})()}
+            <div class="pc-title" style="margin-top:${(()=>{const photos=[...(p.photos||[]),...(p.photoUrl&&!p.photos?[p.photoUrl]:[])].filter(Boolean);return photos.length?'10px':'0'})()}">${p.title}</div>
           </div>
           ${isAdmin?`<div style="display:flex;gap:4px;flex-shrink:0"><button class="ica ica-edit" onclick="openProjForm(${p.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('project',${p.id})">🗑</button></div>`:''}
         </div>
@@ -1375,6 +1429,7 @@ async function removeMemberFromProj(projId,memberId,e){
 
 function openProjForm(id=null){
   _pickedMemberIds=[];
+  _pfPhotos=[];
   document.getElementById('pFormTitle').textContent=id?'Edit Project':'Add Project';
   if(id){
     const p=gp(id);
@@ -1388,13 +1443,16 @@ function openProjForm(id=null){
     document.getElementById('pfTags').value=p.tags.join(', ');
     document.getElementById('pfStatus').value=p.status;
     document.getElementById('pfDrive').value=p.driveUrl||'';
-    document.getElementById('pfPhoto').value=p.photoUrl||'';
+    _pfPhotos=[...(p.photos||[]),...(p.photoUrl&&!p.photos?[p.photoUrl]:[])].filter(Boolean);
     document.getElementById('pfRec').checked=p.recruiting;
   } else {
-    ['pfId','pfTitle','pfAbbr','pfDesc','pfPi','pfFunding','pfTags','pfDrive','pfPhoto'].forEach(f=>document.getElementById(f).value='');
+    ['pfId','pfTitle','pfAbbr','pfDesc','pfPi','pfFunding','pfTags','pfDrive'].forEach(f=>document.getElementById(f).value='');
+    _pfPhotos=[];
     document.getElementById('pfStatus').value='Active';
     document.getElementById('pfRec').checked=false;
   }
+  document.getElementById('pfPhotoUrl').value='';
+  renderPfPhotoList();
   document.getElementById('pfMemberSearch').value='';
   buildMemberPick();
   openModal('pFormModal');
@@ -1434,7 +1492,8 @@ async function saveProject(){
     funding:document.getElementById('pfFunding').value.trim()||null,
     status:document.getElementById('pfStatus').value,
     driveUrl:document.getElementById('pfDrive').value.trim()||null,
-    photoUrl:document.getElementById('pfPhoto').value.trim()||null,
+    photos:[..._pfPhotos],
+    photoUrl:null,
     recruiting:document.getElementById('pfRec').checked,
     memberIds:[..._pickedMemberIds],
   };
@@ -1543,11 +1602,26 @@ function populateRfType(){
 }
 
 /* ── Photo upload helpers (proj/rec) ── */
-function handleProjPhotoUpload(input){
-  const f=input.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=e=>{ document.getElementById('pfPhoto').value=e.target.result; };
-  r.readAsDataURL(f);
+let _pfPhotos=[];
+function renderPfPhotoList(){
+  document.getElementById('pfPhotoList').innerHTML=_pfPhotos.map((p,i)=>`
+    <div style="position:relative;width:70px;height:70px;border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removePfPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+function removePfPhoto(idx){ _pfPhotos.splice(idx,1); renderPfPhotoList(); }
+function addProjPhotoUrl(){
+  const v=document.getElementById('pfPhotoUrl').value.trim(); if(!v) return;
+  _pfPhotos.push(v); document.getElementById('pfPhotoUrl').value=''; renderPfPhotoList();
+}
+function addProjPhotoFiles(input){
+  Array.from(input.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{ _pfPhotos.push(e.target.result); renderPfPhotoList(); };
+    r.readAsDataURL(file);
+  });
+  input.value='';
 }
 function handleRecPhotoUpload(input){
   const f=input.files[0]; if(!f) return;
@@ -1676,21 +1750,54 @@ async function saveRec(){
 /* ══════════════════════════════════════════════════
    NEWS
 ══════════════════════════════════════════════════ */
+function buildCarousel(photos, id, cls=''){
+  if(!photos||!photos.length) return '';
+  const cid='car-'+id;
+  if(photos.length===1) return `<img class="${cls?cls+' ':''}" src="${photos[0]}" style="display:block;width:100%;object-fit:cover;border-radius:9px;border:1px solid var(--border)" loading="lazy">`;
+  const slides=photos.map(p=>`<div class="carousel-slide"><img src="${p}" loading="lazy"></div>`).join('');
+  const dots=photos.map((_,i)=>`<button class="carousel-dot${i===0?' on':''}" onclick="carGo('${cid}',${i})"></button>`).join('');
+  return `<div class="carousel ${cls}" id="${cid}" data-idx="0">
+    <div class="carousel-track" id="${cid}-track">${slides}</div>
+    <button class="carousel-btn prev" onclick="carStep('${cid}',-1)">&#8249;</button>
+    <button class="carousel-btn next" onclick="carStep('${cid}',1)">&#8250;</button>
+    <div class="carousel-dots-row">${dots}</div>
+  </div>`;
+}
+function carStep(id,dir){
+  const el=document.getElementById(id); if(!el) return;
+  const slides=el.querySelectorAll('.carousel-slide');
+  let idx=(parseInt(el.dataset.idx||0)+dir+slides.length)%slides.length;
+  carGo(id,idx);
+}
+function carGo(id,idx){
+  const el=document.getElementById(id); if(!el) return;
+  const slides=el.querySelectorAll('.carousel-slide');
+  idx=(idx+slides.length)%slides.length;
+  el.dataset.idx=idx;
+  el.querySelector('.carousel-track').style.transform=`translateX(-${idx*100}%)`;
+  el.querySelectorAll('.carousel-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
+}
+
 function rNews(){
   if(!D) return;
   const feed=document.getElementById('newsFeed');
   const sorted=[...D.news].sort((a,b)=>new Date(b.date)-new Date(a.date));
   if(!sorted.length){feed.innerHTML=`<div class="empty"><div class="empty-icon">📰</div><p>No news yet.</p></div>`;return}
-  feed.innerHTML=sorted.map(n=>`
+  feed.innerHTML=sorted.map(n=>{
+    // Normalize photos: support both legacy photoUrl and new photos array
+    const photos=[...(n.photos||[]),...(n.photoUrl&&!n.photos?[n.photoUrl]:[])].filter(Boolean);
+    const hasPhotos=photos.length>0;
+    const carouselHtml = hasPhotos ? buildCarousel(photos,'n'+n.id,'news-carousel') : '';
+    return `
     <div class="news-card" id="nc-${n.id}">
       ${isAdmin?`<div style="position:absolute;top:16px;right:16px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openNewsForm(${n.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('news',${n.id})">🗑</button></div>`:''}
       <div class="news-meta">
         <span class="news-cat cat-${n.category.replace(' ','')}">${n.category}</span>
         <span class="news-date">${fmt(n.date)}</span>
       </div>
-      <div class="news-content-row">
-        ${n.photoUrl?`<img class="news-thumb" src="${n.photoUrl}" alt="${n.title}" loading="lazy">`:''}
-        <div class="news-content-col">
+      <div class="news-content-row" style="${!hasPhotos?'display:block':''}">
+        ${carouselHtml}
+        <div class="news-content-col" style="${!hasPhotos?'width:100%':''}">
           <div class="news-title">${n.title}</div>
           <div class="news-body collapsed" id="nb-${n.id}">${n.content}</div>
           <button class="news-read-more" onclick="toggleNewsExpand(${n.id})">Read more ▾</button>
@@ -1698,7 +1805,7 @@ function rNews(){
         </div>
       </div>
       <div class="news-author">— ${n.author}</div>
-    </div>`).join('');
+    </div>`}).join('');
 }
 
 function toggleNewsExpand(id){
@@ -1708,7 +1815,35 @@ function toggleNewsExpand(id){
   btn.textContent=expanded?'Read more ▾':'Show less ▴';
 }
 
+let _nfPhotos = [];
+function renderNfPhotoList(){
+  document.getElementById('nfPhotoList').innerHTML=_nfPhotos.map((p,i)=>`
+    <div style="position:relative;width:70px;height:70px;border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeNfPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+function removeNfPhoto(idx){ _nfPhotos.splice(idx,1); renderNfPhotoList(); }
+function addNewsPhotoUrl(){
+  const v=document.getElementById('nfPhotoUrl').value.trim();
+  if(!v) return;
+  _nfPhotos.push(v);
+  document.getElementById('nfPhotoUrl').value='';
+  renderNfPhotoList();
+}
+function addNewsPhotoFiles(input){
+  const files=Array.from(input.files);
+  let loaded=0;
+  files.forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{ _nfPhotos.push(e.target.result); loaded++; if(loaded===files.length) renderNfPhotoList(); };
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
+
 function openNewsForm(id=null){
+  _nfPhotos=[];
   document.getElementById('nFormTitle').textContent=id?'Edit News':'Add News';
   if(id){
     const n=D.news.find(x=>x.id===id);
@@ -1718,8 +1853,9 @@ function openNewsForm(id=null){
     document.getElementById('nfDate').value=n.date;
     document.getElementById('nfContent').value=n.content;
     document.getElementById('nfAuthor').value=n.author;
-    document.getElementById('nfPhoto').value=n.photoUrl||'';
     document.getElementById('nfLink').value=n.link||'';
+    // Load existing photos
+    _nfPhotos=[...(n.photos||[]),...(n.photoUrl&&!n.photos?[n.photoUrl]:[])].filter(Boolean);
   } else {
     document.getElementById('nfId').value='';
     document.getElementById('nfTitle').value='';
@@ -1727,9 +1863,10 @@ function openNewsForm(id=null){
     document.getElementById('nfCat').value='Publication';
     document.getElementById('nfDate').value=new Date().toISOString().slice(0,10);
     document.getElementById('nfAuthor').value='DrAL Lab';
-    document.getElementById('nfPhoto').value='';
     document.getElementById('nfLink').value='';
   }
+  document.getElementById('nfPhotoUrl').value='';
+  renderNfPhotoList();
   openModal('nFormModal');
 }
 
@@ -1745,7 +1882,8 @@ async function saveNews(){
     id:id||nextId(D.news), title, content, date,
     category:document.getElementById('nfCat').value,
     author:document.getElementById('nfAuthor').value.trim()||'DrAL Lab',
-    photoUrl:document.getElementById('nfPhoto').value.trim()||null,
+    photos:[..._nfPhotos],
+    photoUrl:null, // keep field for compat
     link:document.getElementById('nfLink').value.trim()||null,
   };
   if(id){const i=D.news.findIndex(n=>n.id===id);D.news[i]=obj;}
@@ -1787,9 +1925,663 @@ function renderAll(){
   if(!D.projectTags) D.projectTags=window.SEED_DATA.projectTags||["Health","Mobility","Equity","Urban Design","Aging"];
   if(!D.memberRoles) D.memberRoles=[...DEFAULT_MEMBER_ROLES];
   if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
-  // Apply saved text color
-  const savedColor=(D.heroBgSettings&&D.heroBgSettings.textColor)||'#ffffff';
-  applyHeroTextColor(savedColor);
+  // Apply saved hero colors + photo
+  const s=D.heroBgSettings||{};
+  applyHeroTextColor(s.textColor||'#ffffff');
+  applyHeroAccentColor(s.accentColor||'#a5d4c4');
+  applyHeroPhotoDisplay(s.heroPhotoUrl||null);
+  renderStats(); rMembers();
+  const active=document.querySelector('.page.on')?.id?.replace('page-','');
+  if(active==='projects'){ initTagFilters(); rProjects(); }
+  if(active==='recruiting'){ initRecTypeFilters(); rRec(); }
+  if(active==='news') rNews();
+  if(active==='about') renderAbout();
+}
+
+/* ══════════════════════════════════════════════════
+   HERO BACKGROUND SLIDESHOW + SETTINGS
+══════════════════════════════════════════════════ */
+function getHeroPresets(){
+  return (D&&D.heroBgPresets&&D.heroBgPresets.length)?D.heroBgPresets:HERO_PRESETS;
+}
+function getHeroSettings(){
+  return (D&&D.heroBgSettings)?D.heroBgSettings:{mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+}
+function applyHeroTextColor(hex){
+  const h=document.getElementById('heroSection');
+  if(h) h.style.color=hex||'#ffffff';
+}
+function applyHeroAccentColor(hex){
+  // stat numbers + em italic
+  document.querySelectorAll('.stat-n').forEach(el=>el.style.color=hex||'#a5d4c4');
+  document.querySelectorAll('.hero-text h1 em').forEach(el=>el.style.color=hex||'#a5d4c4');
+}
+function applyHeroPhotoDisplay(url){
+  const box=document.getElementById('heroPhotoBox');
+  const img=document.getElementById('heroPhotoImg');
+  if(box&&img){
+    if(url){img.src=url;box.style.display='block';}
+    else{box.style.display='none';}
+  }
+}
+
+function initHeroBg(){
+  const bg=document.getElementById('heroBg');
+  const dotsEl=document.getElementById('heroDots');
+  if(!bg||!dotsEl) return;
+  const settings=getHeroSettings();
+
+  clearInterval(heroBgTimer);
+  bg.innerHTML='';
+  heroBgLayers=[];
+  dotsEl.innerHTML='';
+
+  const heroEl=document.getElementById('heroSection');
+  const overlayEl=heroEl?heroEl.querySelector('.hero-overlay'):null;
+
+  if(settings.mode==='color'){
+    // Color mode: set background on hero element, remove overlay gradient
+    if(heroEl) heroEl.style.background=settings.color||'#2d4a3e';
+    bg.style.background='transparent';
+    if(overlayEl) overlayEl.style.background='rgba(0,0,0,0.08)';
+  } else {
+    // Slideshow mode: restore hero bg, restore overlay
+    if(heroEl) heroEl.style.background='';
+    bg.style.background='';
+    if(overlayEl) overlayEl.style.background='';
+    const presets=getHeroPresets();
+    presets.forEach((p,i)=>{
+      const div=document.createElement('div');
+      div.className='hero-bg-layer'+(i===0?' active':'');
+      div.style.backgroundImage="url('"+p.url+"')";
+      bg.appendChild(div);
+      heroBgLayers.push(div);
+    });
+    presets.forEach((_,i)=>{
+      const d=document.createElement('button');
+      d.className='hero-bg-dot'+(i===0?' on':'');
+      d.setAttribute('aria-label','BG '+i);
+      d.onclick=()=>goBg(i);
+      dotsEl.appendChild(d);
+    });
+    heroBgIndex=0;
+    if(heroBgLayers[0]) heroBgLayers[0].classList.add('active');
+    heroBgTimer=setInterval(()=>goBg((heroBgIndex+1)%Math.max(heroBgLayers.length,1)),6000);
+  }
+  applyHeroTextColor(settings.textColor||'#ffffff');
+  applyHeroAccentColor(settings.accentColor||'#a5d4c4');
+  applyHeroPhotoDisplay(settings.heroPhotoUrl||null);
+}
+
+function goBg(idx){
+  if(!heroBgLayers.length) return;
+  heroBgLayers[heroBgIndex]?.classList.remove('active');
+  document.querySelectorAll('.hero-bg-dot')[heroBgIndex]?.classList.remove('on');
+  heroBgIndex=(idx+heroBgLayers.length)%heroBgLayers.length;
+  heroBgLayers[heroBgIndex]?.classList.add('active');
+  document.querySelectorAll('.hero-bg-dot')[heroBgIndex]?.classList.add('on');
+}
+
+let _currentBgTab='slideshow';
+function setBgTab(tab){
+  _currentBgTab=tab;
+  document.getElementById('bgPanel-slideshow').style.display=tab==='slideshow'?'block':'none';
+  document.getElementById('bgPanel-color').style.display=tab==='color'?'block':'none';
+  document.getElementById('bgTab-slideshow').style.cssText='flex:1;padding:9px;border:none;font-size:.83rem;font-family:inherit;cursor:pointer;background:'+(tab==='slideshow'?'var(--green);color:#fff':'var(--white);color:var(--text)');
+  document.getElementById('bgTab-color').style.cssText='flex:1;padding:9px;border:none;font-size:.83rem;font-family:inherit;cursor:pointer;background:'+(tab==='color'?'var(--green);color:#fff':'var(--white);color:var(--text)');
+}
+
+function openBgPicker(){
+  const settings=getHeroSettings();
+  setBgTab(settings.mode||'slideshow');
+  renderBgPresetGrid();
+  document.getElementById('bgSolidColor').value=settings.color||'#2d4a3e';
+  document.getElementById('bgSolidHex').value=settings.color||'#2d4a3e';
+  document.getElementById('bgTextColor').value=settings.textColor||'#ffffff';
+  document.getElementById('bgTextHex').value=settings.textColor||'#ffffff';
+  document.getElementById('bgAccentColor').value=settings.accentColor||'#a5d4c4';
+  document.getElementById('bgAccentHex').value=settings.accentColor||'#a5d4c4';
+  document.getElementById('bgHeroPhotoUrl').value=settings.heroPhotoUrl||'';
+  // Swatches
+  const swatches=['#2d4a3e','#1a1a2e','#0f3460','#16213e','#1b4332','#3d2b1f','#4a1942','#2c2c54','#000000','#1c1c1c'];
+  document.getElementById('colorSwatches').innerHTML=swatches.map(s=>`
+    <div onclick="pickSwatch('${s}')" title="${s}" style="width:30px;height:30px;border-radius:50%;background:${s};cursor:pointer;border:2.5px solid ${s===(settings.color||'#2d4a3e')?'var(--gold)':'transparent'}"></div>`).join('');
+  document.getElementById('bgCustomUrl').value='';
+  document.getElementById('bgUploadStatus').textContent='';
+  openModal('bgPickerModal');
+}
+
+function renderBgPresetGrid(){
+  const presets=getHeroPresets();
+  document.getElementById('bgPresetGrid').innerHTML=presets.map((p,i)=>`
+    <div style="position:relative;border-radius:9px;overflow:hidden;border:2px solid ${i===heroBgIndex&&_currentBgTab==='slideshow'?'var(--gold)':'#e0dbd2'};aspect-ratio:16/9">
+      <img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;cursor:pointer" loading="lazy" onclick="pickBg(${i})">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:#fff;font-size:.66rem;padding:3px 7px;display:flex;justify-content:space-between;align-items:center">
+        <span>${p.label||'Photo'}</span>
+        ${presets.length>1?`<button onclick="removeBgPreset(${i},event)" style="background:none;border:none;color:#fff;cursor:pointer;font-size:.85rem;padding:0;line-height:1">×</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function pickBg(idx){
+  setBgTab('slideshow');
+  goBg(idx);
+  clearInterval(heroBgTimer);
+  heroBgTimer=setInterval(()=>goBg((heroBgIndex+1)%Math.max(heroBgLayers.length,1)),6000);
+  renderBgPresetGrid();
+}
+
+async function removeBgPreset(idx,e){
+  e.stopPropagation();
+  if(!D.heroBgPresets) D.heroBgPresets=[...HERO_PRESETS];
+  if(D.heroBgPresets.length<=1){alert('최소 1개의 배경이 있어야 합니다.');return}
+  D.heroBgPresets.splice(idx,1);
+  if(heroBgIndex>=D.heroBgPresets.length) heroBgIndex=0;
+  await saveToFirebase();
+  initHeroBg();
+  renderBgPresetGrid();
+}
+
+async function applyCustomBg(){
+  const url=document.getElementById('bgCustomUrl').value.trim();
+  if(!url) return;
+  if(!D.heroBgPresets) D.heroBgPresets=[...HERO_PRESETS];
+  const ex=D.heroBgPresets.findIndex(p=>p.url===url);
+  if(ex>=0){pickBg(ex);return;}
+  D.heroBgPresets.push({label:'Custom',url});
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.mode='slideshow';
+  await saveToFirebase();
+  initHeroBg();
+  goBg(D.heroBgPresets.length-1);
+  document.getElementById('bgCustomUrl').value='';
+  renderBgPresetGrid();
+}
+
+async function uploadBgImage(input){
+  const file=input.files[0]; if(!file) return;
+  const status=document.getElementById('bgUploadStatus');
+  status.textContent='읽는 중…';
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    if(!D.heroBgPresets) D.heroBgPresets=[...HERO_PRESETS];
+    D.heroBgPresets.push({label:file.name.replace(/\.[^.]+$/,''),url:e.target.result});
+    if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+    D.heroBgSettings.mode='slideshow';
+    status.textContent='✓ 추가됨';
+    await saveToFirebase();
+    initHeroBg();
+    goBg(D.heroBgPresets.length-1);
+    renderBgPresetGrid();
+    input.value='';
+  };
+  reader.readAsDataURL(file);
+}
+
+function pickSwatch(hex){
+  document.getElementById('bgSolidColor').value=hex;
+  document.getElementById('bgSolidHex').value=hex;
+  document.querySelectorAll('#colorSwatches>div').forEach(el=>el.style.borderColor=el.title===hex?'var(--gold)':'transparent');
+}
+function syncColorFromHex(){const v=document.getElementById('bgSolidHex').value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v))document.getElementById('bgSolidColor').value=v;}
+function syncTextColorFromHex(){const v=document.getElementById('bgTextHex').value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v))document.getElementById('bgTextColor').value=v;}
+function syncAccentColorFromHex(){const v=document.getElementById('bgAccentHex').value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v))document.getElementById('bgAccentColor').value=v;}
+
+async function applyBgColor(){
+  const color=document.getElementById('bgSolidColor').value;
+  document.getElementById('bgSolidHex').value=color;
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'color',color,textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.mode='color';
+  D.heroBgSettings.color=color;
+  await saveToFirebase();
+  setBgTab('color');
+  initHeroBg();
+}
+async function applyTextColor(){
+  const color=document.getElementById('bgTextColor').value;
+  document.getElementById('bgTextHex').value=color;
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:color,accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.textColor=color;
+  await saveToFirebase();
+  applyHeroTextColor(color);
+}
+async function resetTextColor(){
+  document.getElementById('bgTextColor').value='#ffffff';
+  document.getElementById('bgTextHex').value='#ffffff';
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.textColor='#ffffff';
+  await saveToFirebase();
+  applyHeroTextColor('#ffffff');
+}
+async function applyAccentColor(){
+  const color=document.getElementById('bgAccentColor').value;
+  document.getElementById('bgAccentHex').value=color;
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:color,heroPhotoUrl:null};
+  D.heroBgSettings.accentColor=color;
+  await saveToFirebase();
+  applyHeroAccentColor(color);
+}
+async function resetAccentColor(){
+  document.getElementById('bgAccentColor').value='#a5d4c4';
+  document.getElementById('bgAccentHex').value='#a5d4c4';
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.accentColor='#a5d4c4';
+  await saveToFirebase();
+  applyHeroAccentColor('#a5d4c4');
+}
+async function uploadHeroPhoto(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    document.getElementById('bgHeroPhotoUrl').value=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+async function applyHeroPhoto(){
+  const url=document.getElementById('bgHeroPhotoUrl').value.trim();
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.heroPhotoUrl=url||null;
+  await saveToFirebase();
+  applyHeroPhotoDisplay(url||null);
+}
+async function removeHeroPhoto(){
+  document.getElementById('bgHeroPhotoUrl').value='';
+  if(!D.heroBgSettings) D.heroBgSettings={mode:'slideshow',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotoUrl:null};
+  D.heroBgSettings.heroPhotoUrl=null;
+  await saveToFirebase();
+  applyHeroPhotoDisplay(null);
+}
+
+/* ══════════════════════════════════════════════════
+   RECRUITING TYPE MANAGER
+══════════════════════════════════════════════════ */
+const DEFAULT_REC_TYPES = ['PhD Position','Postdoc','RA','Undergraduate'];
+
+function getRecTypes(){ return (D&&D.recTypes&&D.recTypes.length)?D.recTypes:[...DEFAULT_REC_TYPES]; }
+
+function openRecTypeManager(){
+  if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  renderRecTypeList();
+  openModal('recTypeModal');
+}
+function renderRecTypeList(){
+  const types=D.recTypes||DEFAULT_REC_TYPES;
+  document.getElementById('recTypeList').innerHTML=types.map((t,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;background:var(--green-pale);color:var(--green);padding:5px 11px;border-radius:20px;font-size:.79rem;font-weight:500">
+      ${t}<button onclick="removeRecType(${i})" style="background:none;border:none;color:inherit;cursor:pointer;font-size:.9rem;padding:0;line-height:1">×</button>
+    </div>`).join('');
+}
+async function addRecType(){
+  const v=document.getElementById('newRecTypeInput').value.trim(); if(!v) return;
+  if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  if(D.recTypes.includes(v)){alert('Type already exists.');return}
+  D.recTypes.push(v);
+  document.getElementById('newRecTypeInput').value='';
+  renderRecTypeList();
+  await saveToFirebase();
+  initRecTypeFilters();
+  populateRfType();
+}
+async function removeRecType(idx){
+  if(!D.recTypes) return;
+  D.recTypes.splice(idx,1);
+  renderRecTypeList();
+  await saveToFirebase();
+  initRecTypeFilters();
+  populateRfType();
+}
+function initRecTypeFilters(){
+  const types=getRecTypes();
+  const bar=document.getElementById('recFilterBar');
+  if(!bar) return;
+  // Remove old type buttons (keep search input, All, ShowClosed)
+  Array.from(bar.querySelectorAll('.fb:not([data-fixed])')).forEach(b=>b.remove());
+  // Insert type buttons before the Show Closed toggle
+  const showClosedBtn=document.getElementById('showClosedBtn');
+  types.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='fb'+(rFilter===t?' on':'');
+    b.textContent=t;
+    b.onclick=()=>rf(t,b);
+    bar.insertBefore(b, showClosedBtn);
+  });
+}
+function populateRfType(){
+  const sel=document.getElementById('rfType'); if(!sel) return;
+  const types=getRecTypes();
+  const cur=sel.value;
+  sel.innerHTML=types.map(t=>`<option${t===cur?' selected':''}>${t}</option>`).join('');
+}
+
+/* ── Photo upload helpers (proj/rec) ── */
+let _pfPhotos=[];
+function renderPfPhotoList(){
+  document.getElementById('pfPhotoList').innerHTML=_pfPhotos.map((p,i)=>`
+    <div style="position:relative;width:70px;height:70px;border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removePfPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+function removePfPhoto(idx){ _pfPhotos.splice(idx,1); renderPfPhotoList(); }
+function addProjPhotoUrl(){
+  const v=document.getElementById('pfPhotoUrl').value.trim(); if(!v) return;
+  _pfPhotos.push(v); document.getElementById('pfPhotoUrl').value=''; renderPfPhotoList();
+}
+function addProjPhotoFiles(input){
+  Array.from(input.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{ _pfPhotos.push(e.target.result); renderPfPhotoList(); };
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
+function handleRecPhotoUpload(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ document.getElementById('rfPhoto').value=e.target.result; };
+  r.readAsDataURL(f);
+}
+
+/* ══════════════════════════════════════════════════
+   RECRUITING
+══════════════════════════════════════════════════ */
+function rf(f,btn){rFilter=f;document.querySelectorAll('#page-recruiting .fbar .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rRec()}
+
+function toggleShowClosed(){
+  showClosedRec=!showClosedRec;
+  const btn=document.getElementById('showClosedBtn');
+  btn.classList.toggle('on',showClosedRec);
+  btn.textContent=showClosedRec?'📂 Hide Closed':'📂 Show Closed';
+  rRec();
+}
+
+function rRec(){
+  if(!D) return;
+  const q=document.getElementById('rs').value.toLowerCase();
+  const list=D.recruiting.filter(r=>
+    (showClosedRec ? true : r.status==='Open')&&
+    (rFilter==='all'||r.type===rFilter)&&
+    (!q||r.title.toLowerCase().includes(q)||r.desc.toLowerCase().includes(q))
+  );
+  const g=document.getElementById('rGrid');
+  if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><p>No ${showClosedRec?'':'open '}positions at this time.</p></div>`;return}
+  g.innerHTML=list.map(r=>{
+    const proj=gp(r.projectId);
+    const isClosed=r.status!=='Open';
+    return `
+    <div class="rc ${r.urgent&&!isClosed?'urg':''} ${isClosed?'closed-pos':''}">
+      ${isAdmin?`<div style="position:absolute;top:14px;right:14px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openRecForm(${r.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('rec',${r.id})">🗑</button></div>`:''}
+      <div class="rc-top">
+        <div style="flex:1">
+          <div style="display:flex;gap:13px;align-items:flex-start">
+            ${r.photoUrl?`<img src="${r.photoUrl}" style="width:72px;height:60px;object-fit:cover;border-radius:7px;flex-shrink:0;border:1px solid var(--border)" alt="">`:''}
+            <div>
+              <div class="rc-title">${r.title}</div>
+              <div class="rc-proj">${proj?proj.title:''}</div>
+            </div>
+          </div>
+        </div>
+        <div class="rc-badges">
+          <span class="rbg rbg-t">${r.type}</span>
+          ${r.urgent&&!isClosed?'<span class="rbg rbg-u">Urgent</span>':''}
+          ${isClosed?`<span class="rc-closed-badge">${r.status}</span>`:''}
+        </div>
+      </div>
+      <div class="rc-desc">${r.desc}</div>
+      <div class="rc-foot">
+        <div class="rc-meta">
+          <span>📅 ${fmt(r.deadline)}</span>
+          ${r.funding?`<span>💰 ${r.funding}</span>`:''}
+          <span>📬 ${r.contactEmail}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${!isClosed?`<a class="apply" href="mailto:${r.contactEmail}?subject=Application: ${encodeURIComponent(r.title)}">Apply / Contact</a>`:'<span style="font-size:.78rem;color:var(--muted)">Position closed</span>'}
+          ${r.link?`<a class="drive-btn" href="${r.link}" target="_blank" style="pointer-events:auto;opacity:1">🔗 More Info</a>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRecForm(id=null){
+  document.getElementById('rfProject').innerHTML=
+    `<option value="">— None —</option>`+
+    D.projects.map(p=>`<option value="${p.id}">${p.title}</option>`).join('');
+  document.getElementById('rFormTitle').textContent=id?'Edit Posting':'Add Posting';
+  populateRfType();
+  if(id){
+    const r=D.recruiting.find(x=>x.id===id);
+    document.getElementById('rfId').value=r.id;
+    document.getElementById('rfTitle').value=r.title;
+    document.getElementById('rfType').value=r.type;
+    document.getElementById('rfProject').value=r.projectId||'';
+    document.getElementById('rfDesc').value=r.desc;
+    document.getElementById('rfDeadline').value=r.deadline||'';
+    document.getElementById('rfFunding').value=r.funding||'';
+    document.getElementById('rfEmail').value=r.contactEmail;
+    document.getElementById('rfStatus').value=r.status;
+    document.getElementById('rfUrgent').checked=r.urgent;
+    document.getElementById('rfLink').value=r.link||'';
+    document.getElementById('rfPhoto').value=r.photoUrl||'';
+  } else {
+    ['rfId','rfTitle','rfDesc','rfDeadline','rfFunding','rfEmail','rfLink','rfPhoto'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('rfType').value='PhD Position';
+    document.getElementById('rfStatus').value='Open';
+    document.getElementById('rfUrgent').checked=false;
+  }
+  openModal('rFormModal');
+}
+
+async function saveRec(){
+  const title=document.getElementById('rfTitle').value.trim();
+  const email=document.getElementById('rfEmail').value.trim();
+  const desc=document.getElementById('rfDesc').value.trim();
+  if(!title||!email||!desc){alert('Title, Email, Description are required.');return}
+  const btn=document.getElementById('rfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('rfId').value||'0');
+  const obj={
+    id:id||nextId(D.recruiting), title, desc,
+    type:document.getElementById('rfType').value,
+    projectId:parseInt(document.getElementById('rfProject').value||'0')||null,
+    contactEmail:email,
+    deadline:document.getElementById('rfDeadline').value||null,
+    funding:document.getElementById('rfFunding').value.trim()||null,
+    status:document.getElementById('rfStatus').value,
+    urgent:document.getElementById('rfUrgent').checked,
+    link:document.getElementById('rfLink').value.trim()||null,
+    photoUrl:document.getElementById('rfPhoto').value.trim()||null,
+  };
+  if(id){const i=D.recruiting.findIndex(r=>r.id===id);D.recruiting[i]=obj;}
+  else{D.recruiting.unshift(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save Posting';
+  closeModal('rFormModal'); rRec();
+}
+
+/* ══════════════════════════════════════════════════
+   NEWS
+══════════════════════════════════════════════════ */
+function buildCarousel(photos, id, cls=''){
+  if(!photos||!photos.length) return '';
+  const cid='car-'+id;
+  if(photos.length===1) return `<img class="${cls?cls+' ':''}" src="${photos[0]}" style="display:block;width:100%;object-fit:cover;border-radius:9px;border:1px solid var(--border)" loading="lazy">`;
+  const slides=photos.map(p=>`<div class="carousel-slide"><img src="${p}" loading="lazy"></div>`).join('');
+  const dots=photos.map((_,i)=>`<button class="carousel-dot${i===0?' on':''}" onclick="carGo('${cid}',${i})"></button>`).join('');
+  return `<div class="carousel ${cls}" id="${cid}" data-idx="0">
+    <div class="carousel-track" id="${cid}-track">${slides}</div>
+    <button class="carousel-btn prev" onclick="carStep('${cid}',-1)">&#8249;</button>
+    <button class="carousel-btn next" onclick="carStep('${cid}',1)">&#8250;</button>
+    <div class="carousel-dots-row">${dots}</div>
+  </div>`;
+}
+function carStep(id,dir){
+  const el=document.getElementById(id); if(!el) return;
+  const slides=el.querySelectorAll('.carousel-slide');
+  let idx=(parseInt(el.dataset.idx||0)+dir+slides.length)%slides.length;
+  carGo(id,idx);
+}
+function carGo(id,idx){
+  const el=document.getElementById(id); if(!el) return;
+  const slides=el.querySelectorAll('.carousel-slide');
+  idx=(idx+slides.length)%slides.length;
+  el.dataset.idx=idx;
+  el.querySelector('.carousel-track').style.transform=`translateX(-${idx*100}%)`;
+  el.querySelectorAll('.carousel-dot').forEach((d,i)=>d.classList.toggle('on',i===idx));
+}
+
+function rNews(){
+  if(!D) return;
+  const feed=document.getElementById('newsFeed');
+  const sorted=[...D.news].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!sorted.length){feed.innerHTML=`<div class="empty"><div class="empty-icon">📰</div><p>No news yet.</p></div>`;return}
+  feed.innerHTML=sorted.map(n=>{
+    // Normalize photos: support both legacy photoUrl and new photos array
+    const photos=[...(n.photos||[]),...(n.photoUrl&&!n.photos?[n.photoUrl]:[])].filter(Boolean);
+    const hasPhotos=photos.length>0;
+    const carouselHtml = hasPhotos ? buildCarousel(photos,'n'+n.id,'news-carousel') : '';
+    return `
+    <div class="news-card" id="nc-${n.id}">
+      ${isAdmin?`<div style="position:absolute;top:16px;right:16px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openNewsForm(${n.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('news',${n.id})">🗑</button></div>`:''}
+      <div class="news-meta">
+        <span class="news-cat cat-${n.category.replace(' ','')}">${n.category}</span>
+        <span class="news-date">${fmt(n.date)}</span>
+      </div>
+      <div class="news-content-row" style="${!hasPhotos?'display:block':''}">
+        ${carouselHtml}
+        <div class="news-content-col" style="${!hasPhotos?'width:100%':''}">
+          <div class="news-title">${n.title}</div>
+          <div class="news-body collapsed" id="nb-${n.id}">${n.content}</div>
+          <button class="news-read-more" onclick="toggleNewsExpand(${n.id})">Read more ▾</button>
+          ${n.link?`<a class="news-ext-link" href="${n.link}" target="_blank">🔗 Read full article →</a>`:''}
+        </div>
+      </div>
+      <div class="news-author">— ${n.author}</div>
+    </div>`}).join('');
+}
+
+function toggleNewsExpand(id){
+  const body=document.getElementById('nb-'+id);
+  const btn=body.nextElementSibling;
+  const expanded=body.classList.toggle('collapsed');
+  btn.textContent=expanded?'Read more ▾':'Show less ▴';
+}
+
+let _nfPhotos = [];
+function renderNfPhotoList(){
+  document.getElementById('nfPhotoList').innerHTML=_nfPhotos.map((p,i)=>`
+    <div style="position:relative;width:70px;height:70px;border-radius:7px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeNfPhoto(${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+function removeNfPhoto(idx){ _nfPhotos.splice(idx,1); renderNfPhotoList(); }
+function addNewsPhotoUrl(){
+  const v=document.getElementById('nfPhotoUrl').value.trim();
+  if(!v) return;
+  _nfPhotos.push(v);
+  document.getElementById('nfPhotoUrl').value='';
+  renderNfPhotoList();
+}
+function addNewsPhotoFiles(input){
+  const files=Array.from(input.files);
+  let loaded=0;
+  files.forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{ _nfPhotos.push(e.target.result); loaded++; if(loaded===files.length) renderNfPhotoList(); };
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
+
+function openNewsForm(id=null){
+  _nfPhotos=[];
+  document.getElementById('nFormTitle').textContent=id?'Edit News':'Add News';
+  if(id){
+    const n=D.news.find(x=>x.id===id);
+    document.getElementById('nfId').value=n.id;
+    document.getElementById('nfTitle').value=n.title;
+    document.getElementById('nfCat').value=n.category;
+    document.getElementById('nfDate').value=n.date;
+    document.getElementById('nfContent').value=n.content;
+    document.getElementById('nfAuthor').value=n.author;
+    document.getElementById('nfLink').value=n.link||'';
+    // Load existing photos
+    _nfPhotos=[...(n.photos||[]),...(n.photoUrl&&!n.photos?[n.photoUrl]:[])].filter(Boolean);
+  } else {
+    document.getElementById('nfId').value='';
+    document.getElementById('nfTitle').value='';
+    document.getElementById('nfContent').value='';
+    document.getElementById('nfCat').value='Publication';
+    document.getElementById('nfDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('nfAuthor').value='DrAL Lab';
+    document.getElementById('nfLink').value='';
+  }
+  document.getElementById('nfPhotoUrl').value='';
+  renderNfPhotoList();
+  openModal('nFormModal');
+}
+
+async function saveNews(){
+  const title=document.getElementById('nfTitle').value.trim();
+  const content=document.getElementById('nfContent').value.trim();
+  const date=document.getElementById('nfDate').value;
+  if(!title||!content||!date){alert('Title, Date, Content are required.');return}
+  const btn=document.getElementById('nfSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const id=parseInt(document.getElementById('nfId').value||'0');
+  const obj={
+    id:id||nextId(D.news), title, content, date,
+    category:document.getElementById('nfCat').value,
+    author:document.getElementById('nfAuthor').value.trim()||'DrAL Lab',
+    photos:[..._nfPhotos],
+    photoUrl:null, // keep field for compat
+    link:document.getElementById('nfLink').value.trim()||null,
+  };
+  if(id){const i=D.news.findIndex(n=>n.id===id);D.news[i]=obj;}
+  else{D.news.unshift(obj);}
+  await saveToFirebase();
+  btn.disabled=false; btn.textContent='Save News';
+  closeModal('nFormModal'); rNews();
+}
+
+/* ══════════════════════════════════════════════════
+   DELETE CONFIRM
+══════════════════════════════════════════════════ */
+function confirmDelete(type,id){
+  const labels={member:'member',project:'project',rec:'posting',news:'news item'};
+  document.getElementById('confirmMsg').textContent=`Delete this ${labels[type]}?`;
+  document.getElementById('confirmOk').onclick=async()=>{
+    if(type==='member'){
+      D.members=D.members.filter(m=>m.id!==id);
+      D.projects.forEach(p=>{p.memberIds=p.memberIds.filter(mid=>mid!==id)});
+    } else if(type==='project'){
+      D.projects=D.projects.filter(p=>p.id!==id);
+    } else if(type==='rec'){
+      D.recruiting=D.recruiting.filter(r=>r.id!==id);
+    } else if(type==='news'){
+      D.news=D.news.filter(n=>n.id!==id);
+    }
+    await saveToFirebase();
+    closeModal('confirmModal');
+    renderAll();
+  };
+  openModal('confirmModal');
+}
+
+/* ══════════════════════════════════════════════════
+   RENDER ALL
+══════════════════════════════════════════════════ */
+function renderAll(){
+  if(!D) return;
+  if(!D.projectTags) D.projectTags=window.SEED_DATA.projectTags||["Health","Mobility","Equity","Urban Design","Aging"];
+  if(!D.memberRoles) D.memberRoles=[...DEFAULT_MEMBER_ROLES];
+  if(!D.recTypes) D.recTypes=[...DEFAULT_REC_TYPES];
+  // Apply saved hero colors + photo
+  const s=D.heroBgSettings||{};
+  applyHeroTextColor(s.textColor||'#ffffff');
+  applyHeroAccentColor(s.accentColor||'#a5d4c4');
+  applyHeroPhotoDisplay(s.heroPhotoUrl||null);
   renderStats(); rMembers();
   const active=document.querySelector('.page.on')?.id?.replace('page-','');
   if(active==='projects'){ initTagFilters(); rProjects(); }
