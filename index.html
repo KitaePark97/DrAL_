@@ -457,6 +457,30 @@ body.dark .fg input,.dark .fg select,.dark .fg textarea{background:var(--white);
   .hero-stats{flex-wrap:wrap;gap:18px}
   .mgrid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* About page gallery */
+.about-gallery{position:relative;border-radius:16px;overflow:hidden;margin-bottom:28px;background:#000}
+.about-gallery-inner{width:100%;overflow:hidden}
+.about-gallery-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.about-gallery-slide{flex:0 0 100%;min-width:0;position:relative;height:0;padding-bottom:42%}
+.about-gallery-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.about-gallery-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);border:none;color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;z-index:2;backdrop-filter:blur(6px);transition:all .2s}
+.about-gallery-btn:hover{background:rgba(0,0,0,.65)}
+.about-gallery-btn.prev{left:12px}.about-gallery-btn.next{right:12px}
+.about-gallery-dots{display:flex;justify-content:center;gap:5px;padding:9px 0 4px;background:rgba(0,0,0,.3);position:absolute;bottom:0;left:0;right:0}
+.about-gallery-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);border:none;cursor:pointer;padding:0;transition:all .2s}
+.about-gallery-dot.on{background:#fff}
+.about-gallery-count{position:absolute;top:10px;right:13px;background:rgba(0,0,0,.45);color:#fff;font-size:.68rem;padding:2px 8px;border-radius:10px;z-index:2;backdrop-filter:blur(4px)}
+.about-gallery-empty{background:var(--green-pale);border:2px dashed var(--border);border-radius:16px;margin-bottom:28px;padding:40px;text-align:center;color:var(--muted);display:none}
+.admin-mode .about-gallery-empty{display:block}
+/* Nav tab manager */
+.nav-tab-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--white)}
+.nav-tab-toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.nav-tab-toggle input{opacity:0;width:0;height:0;position:absolute}
+.nav-tab-slider{position:absolute;inset:0;background:#ccc;border-radius:11px;cursor:pointer;transition:.3s}
+.nav-tab-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.nav-tab-toggle input:checked+.nav-tab-slider{background:var(--green)}
+.nav-tab-toggle input:checked+.nav-tab-slider:before{transform:translateX(18px)}
 </style>
 </head>
 <body>
@@ -499,14 +523,15 @@ const FIREBASE_CONFIG = {
     <button class="nbtn" onclick="goto('recruiting',this)">Recruiting</button>
     <button class="nbtn" onclick="goto('news',this)">News</button>
     <button class="nbtn" onclick="goto('calendar',this)">Calendar</button>
-    <button class="nbtn" onclick="goto('publications',this)">Publications</button>
-    <button class="nbtn" onclick="goto('resources',this)">Resources</button>
-    <button class="nbtn admin-only hidden" id="analyticsNavBtn" onclick="goto('analytics',this)" style="display:none">📊 Analytics</button>
+    <button class="nbtn" id="navBtn-publications" onclick="goto('publications',this)" style="display:none">Publications</button>
+    <button class="nbtn" id="navBtn-resources" onclick="goto('resources',this)">Resources</button>
+    <button class="nbtn" id="navBtn-analytics" onclick="goto('analytics',this)">Analytics</button>
   </div>
   <div class="nav-right">
-    <button class="nbtn" onclick="openSearch()" title="Search" style="font-size:1rem;padding:6px 10px">🔍</button>
+    <button class="nbtn" onclick="openSearch()" title="Search (Ctrl+K)" style="font-size:1rem;padding:6px 10px">🔍</button>
     <button id="darkToggle" class="nbtn" onclick="toggleDark()" title="Dark Mode" style="font-size:1rem;padding:6px 10px">🌙</button>
     <div class="save-indicator" id="saveIndicator">✓ Saved</div>
+    <button id="navMgrBtn" onclick="openNavManager()" class="admin-btn" style="display:none">⚙ Tabs</button>
     <button class="admin-btn" id="adminBtn" onclick="adminToggle()">
       <span id="adminIcon">🔒</span><span id="adminLabel">Admin</span>
     </button>
@@ -551,6 +576,20 @@ const FIREBASE_CONFIG = {
   <div class="sh-row sh">
     <div><h2>About DrAL Lab</h2><div class="sh-line"></div></div>
     <button class="add-btn admin-only" style="display:none" onclick="openAboutEdit()">✏️ Edit About</button>
+  </div>
+  <!-- About Gallery -->
+  <div id="aboutGallery" class="about-gallery" style="display:none">
+    <div class="about-gallery-inner" id="aboutGalleryInner">
+      <div id="aboutGalleryTrack" class="about-gallery-track"></div>
+    </div>
+    <button class="about-gallery-btn prev" onclick="aboutGalleryStep(-1)">&#8249;</button>
+    <button class="about-gallery-btn next" onclick="aboutGalleryStep(1)">&#8250;</button>
+    <div id="aboutGalleryDots" class="about-gallery-dots"></div>
+    <div id="aboutGalleryCount" class="about-gallery-count" style="display:none"></div>
+  </div>
+  <div class="about-gallery-empty" id="aboutGalleryEmpty">
+    <div style="font-size:2rem;margin-bottom:8px">🖼</div>
+    <p>No photos yet. Click "Edit About" to add gallery photos.</p>
   </div>
   <div class="about-hero">
     <div class="about-tag">Texas A&M University · College of Architecture</div>
@@ -632,7 +671,10 @@ const FIREBASE_CONFIG = {
   </div>
   <div class="admin-bar" id="nAdminBar">
     <span>🟢 Admin Mode — Add, edit, or delete news</span>
-    <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="add-btn" style="background:#0369a1" onclick="openNewsCatManager()">⚙ Categories</button>
+      <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
+    </div>
   </div>
   <div class="news-feed" id="newsFeed"></div>
 </div>
@@ -641,6 +683,7 @@ const FIREBASE_CONFIG = {
 <div id="page-calendar" class="page">
   <div class="sh-row sh">
     <div><h2>Lab Calendar</h2><div class="sh-line"></div><p>Lab meetings, recruiting deadlines, and upcoming events.</p></div>
+    <button onclick="exportIcs('all')" style="background:none;border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;font-size:.82rem;cursor:pointer;display:flex;align-items:center;gap:6px">📅 Export .ics</button>
   </div>
   <div class="admin-bar" id="calAdminBar">
     <span>🟢 Admin Mode — Add, edit, or delete events</span>
@@ -920,7 +963,7 @@ const FIREBASE_CONFIG = {
     <input type="hidden" id="nfId">
     <div class="fg"><label>Headline *</label><input id="nfTitle" type="text"></div>
     <div class="fr">
-      <div class="fg"><label>Category</label><select id="nfCat"><option>Publication</option><option>Award</option><option>Event</option><option>Announcement</option><option>Other</option></select></div>
+      <div class="fg"><label>Category</label><select id="nfCat"></select></div>
       <div class="fg"><label>Date *</label><input id="nfDate" type="date"></div>
     </div>
     <div class="fg"><label>Content *</label><textarea id="nfContent" style="min-height:110px"></textarea></div>
@@ -936,6 +979,9 @@ const FIREBASE_CONFIG = {
       </div>
     </div>
     <div class="fg"><label>Link URL</label><input id="nfLink" type="url" placeholder="https://… (related article, paper, etc.)"></div>
+    <div class="fg"><label>Event Date/Time <span style="font-weight:400;color:var(--muted)">(optional — auto-adds to Calendar)</span></label>
+      <div class="fr"><div class="fg" style="margin-bottom:0"><input id="nfEventDate" type="date"></div><div class="fg" style="margin-bottom:0"><input id="nfEventTime" type="time" placeholder="Start time"></div></div>
+    </div>
     <div class="fg"><label>Author</label><input id="nfAuthor" type="text" value="DrAL Lab"></div>
     <div class="factions">
       <button class="btn-cancel" onclick="closeModal('nFormModal')">Cancel</button>
@@ -954,6 +1000,17 @@ const FIREBASE_CONFIG = {
     <div class="fg"><label>Mission Statement</label><textarea id="afMission" style="min-height:80px"></textarea></div>
     <div class="fg"><label>Contact Email</label><input id="afContact" type="email"></div>
     <div class="fg"><label>LinkedIn URL</label><input id="afLinkedin" type="url" placeholder="https://www.linkedin.com/in/…"></div>
+    <div class="fg">
+      <label>About Gallery Photos <span style="font-weight:400;color:var(--muted)">(displayed at top of About page)</span></label>
+      <div id="afPhotoList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="afPhotoUrl" type="url" placeholder="https://… (image URL)" style="flex:1;min-width:140px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+        <button type="button" onclick="addAboutPhotoUrl()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.82rem;cursor:pointer">+ URL</button>
+        <label style="font-size:.82rem;cursor:pointer;background:var(--bg);border:1px solid var(--border);padding:8px 12px;border-radius:8px;white-space:nowrap;display:flex;align-items:center">
+          📁 Upload<input type="file" accept="image/*" multiple onchange="addAboutPhotoFiles(this)" style="display:none">
+        </label>
+      </div>
+    </div>
     <div class="factions">
       <button class="btn-cancel" onclick="closeModal('aboutModal')">Cancel</button>
       <button class="btn-save" onclick="saveAbout()">Save</button>
@@ -1076,7 +1133,10 @@ const FIREBASE_CONFIG = {
     </div>
     <div class="fr">
       <div class="fg"><label>Type</label><select id="evType"></select></div>
-      <div class="fg"><label>Time <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="evTime" type="time"></div>
+      <div class="fr">
+      <div class="fg"><label>Start Time</label><input id="evTime" type="time"></div>
+      <div class="fg"><label>End Time</label><input id="evTimeEnd" type="time"></div>
+    </div>
     </div>
     <div class="fg"><label>Description</label><textarea id="evDesc" style="min-height:70px"></textarea></div>
     <div class="fg"><label>Link URL <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="evLink" type="url" placeholder="https://…"></div>
@@ -1115,7 +1175,6 @@ const FIREBASE_CONFIG = {
 <!-- Confirm delete -->
 <div class="overlay" id="confirmModal">
   <div class="modal" style="max-width:360px;text-align:center">
-    <div style="font-size:2.5rem;margin-bottom:12px">⚠️</div>
     <h3 id="confirmMsg" style="font-size:1.3rem;margin-bottom:10px"></h3>
     <p id="confirmSub" style="font-size:.85rem;color:var(--muted);margin-bottom:24px">This action cannot be undone.</p>
     <div style="display:flex;gap:10px;justify-content:center">
@@ -1199,6 +1258,34 @@ const FIREBASE_CONFIG = {
     </div>
   </div>
 </div>
+
+<!-- Nav Tab Manager -->
+<div class="overlay" id="navManagerModal" onclick="if(event.target===this)closeModal('navManagerModal')">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-x" onclick="closeModal('navManagerModal')">×</button>
+    <h3>Manage Navigation Tabs</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:18px">Toggle which pages appear in the navigation bar.</p>
+    <div id="navTabList" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="factions"><button class="btn-cancel" onclick="closeModal('navManagerModal')">Done</button></div>
+  </div>
+</div>
+
+<!-- News Category Manager -->
+<div class="overlay" id="newsCatManagerModal" onclick="if(event.target===this)closeModal('newsCatManagerModal')">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-x" onclick="closeModal('newsCatManagerModal')">×</button>
+    <h3>Manage News Categories</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:18px">Add or remove categories for Lab News posts.</p>
+    <div id="newsCatList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <input id="newCatInput" type="text" placeholder="New category name…" style="flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;outline:none" onkeydown="if(event.key==='Enter')addNewsCategory()">
+      <button class="add-btn" onclick="addNewsCategory()">+ Add</button>
+    </div>
+    <div class="factions"><button class="btn-cancel" onclick="closeModal('newsCatManagerModal')">Done</button></div>
+  </div>
+</div>
+
+<!-- About Gallery Manager (in Admin edit popup) -->
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightboxModal" onclick="closeLightbox()">
@@ -1394,7 +1481,7 @@ function adminToggle(){
     document.getElementById('adminLabel').textContent='Admin';
     document.querySelectorAll('.admin-bar').forEach(b=>b.classList.remove('show'));
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
-    document.getElementById('analyticsNavBtn')?.classList.add('hidden');
+    document.getElementById('navMgrBtn').style.display='none';
     renderAll();
   } else {
     document.getElementById('pwInput').value='';
@@ -1415,7 +1502,7 @@ function checkPw(){
     document.getElementById('adminLabel').textContent='Admin ON';
     document.querySelectorAll('.admin-bar').forEach(b=>b.classList.add('show'));
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
-    document.getElementById('analyticsNavBtn')?.classList.remove('hidden');
+    document.getElementById('navMgrBtn').style.display='inline-flex';
     renderAll();
   } else {
     document.getElementById('pwErr').style.display='block';
@@ -1463,13 +1550,36 @@ function renderAbout(){
   }
 }
 
+let _afPhotos=[];
+function renderAfPhotoList(){
+  document.getElementById('afPhotoList').innerHTML=_afPhotos.map((p,i)=>`
+    <div style="position:relative;width:70px;height:50px;border-radius:6px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${p}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="removeAfPhoto(${i})" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);border:none;color:#fff;width:16px;height:16px;border-radius:50%;cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+function removeAfPhoto(i){ _afPhotos.splice(i,1); renderAfPhotoList(); }
+function addAboutPhotoUrl(){
+  const v=document.getElementById('afPhotoUrl').value.trim(); if(!v) return;
+  _afPhotos.push(v); document.getElementById('afPhotoUrl').value=''; renderAfPhotoList();
+}
+function addAboutPhotoFiles(input){
+  Array.from(input.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{ _afPhotos.push(e.target.result); renderAfPhotoList(); };
+    r.readAsDataURL(file);
+  });
+  input.value='';
+}
 function openAboutEdit(){
+  _afPhotos=[...(D.aboutPhotos||[])];
   const a=D.about;
   document.getElementById('afTagline').value=a.tagline;
   document.getElementById('afDesc').value=a.description;
   document.getElementById('afMission').value=a.mission;
   document.getElementById('afContact').value=a.contact;
   document.getElementById('afLinkedin').value=a.linkedin||'';
+  renderAfPhotoList();
   openModal('aboutModal');
 }
 async function saveAbout(){
@@ -1480,9 +1590,10 @@ async function saveAbout(){
     contact:     document.getElementById('afContact').value.trim(),
     linkedin:    document.getElementById('afLinkedin').value.trim()||null,
   };
+  D.aboutPhotos=[..._afPhotos];
   await saveToFirebase();
   closeModal('aboutModal');
-  renderAbout(); renderStats();
+  renderAbout(); renderStats(); initAboutGallery();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1906,6 +2017,11 @@ function openRecTypeManager(){
   if(!D.calEventTypes) D.calEventTypes=[...DEFAULT_EV_TYPES];
   if(!D.publications) D.publications=[];
   if(!D.resources) D.resources=[];
+  if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
+  if(!D.hiddenTabs) D.hiddenTabs=['publications'];
+  if(!D.aboutPhotos) D.aboutPhotos=[];
+  applyHiddenTabs();
+  initAboutGallery();
   renderRecTypeList();
   openModal('recTypeModal');
 }
@@ -1923,6 +2039,11 @@ async function addRecType(){
   if(!D.calEventTypes) D.calEventTypes=[...DEFAULT_EV_TYPES];
   if(!D.publications) D.publications=[];
   if(!D.resources) D.resources=[];
+  if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
+  if(!D.hiddenTabs) D.hiddenTabs=['publications'];
+  if(!D.aboutPhotos) D.aboutPhotos=[];
+  applyHiddenTabs();
+  initAboutGallery();
   if(D.recTypes.includes(v)){alert('Type already exists.');return}
   D.recTypes.push(v);
   document.getElementById('newRecTypeInput').value='';
@@ -2356,6 +2477,7 @@ function openNewsForm(id=null){
   }
   document.getElementById('nfPhotoUrl').value='';
   renderNfPhotoList();
+  populateNfCat();
   openModal('nFormModal');
 }
 
@@ -2367,19 +2489,30 @@ async function saveNews(){
   const btn=document.getElementById('nfSaveBtn');
   btn.disabled=true; btn.textContent='Saving…';
   const id=parseInt(document.getElementById('nfId').value||'0');
+  const category=document.getElementById('nfCat').value;
+  const eventDate=document.getElementById('nfEventDate').value||null;
+  const eventTime=document.getElementById('nfEventTime').value||null;
   const obj={
-    id:id||nextId(D.news), title, content, date,
-    category:document.getElementById('nfCat').value,
+    id:id||nextId(D.news), title, content, date, category,
     author:document.getElementById('nfAuthor').value.trim()||'DrAL Lab',
     photos:[..._nfPhotos],
-    photoUrl:null, // keep field for compat
+    photoUrl:null,
     link:document.getElementById('nfLink').value.trim()||null,
+    eventDate, eventTime,
   };
   if(id){const i=D.news.findIndex(n=>n.id===id);D.news[i]=obj;}
   else{D.news.unshift(obj);}
+  // Auto-add to calendar if Event category and date provided
+  if(category==='Event'&&eventDate){
+    if(!D.events) D.events=[];
+    const calId='news-ev-'+(id||obj.id);
+    D.events=D.events.filter(e=>e.id!==calId);
+    D.events.push({id:calId,title,date:eventDate,type:'event',time:eventTime||null,
+      desc:content.slice(0,200),link:obj.link||null,newsId:id||obj.id,autoGen:true});
+  }
   await saveToFirebase();
   btn.disabled=false; btn.textContent='Save News';
-  closeModal('nFormModal'); rNews();
+  closeModal('nFormModal'); rNews(); rCalendar();
 }
 
 /* ══════════════════════════════════════════════════
@@ -2424,6 +2557,11 @@ function renderAll(){
   if(!D.calEventTypes) D.calEventTypes=[...DEFAULT_EV_TYPES];
   if(!D.publications) D.publications=[];
   if(!D.resources) D.resources=[];
+  if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
+  if(!D.hiddenTabs) D.hiddenTabs=['publications'];
+  if(!D.aboutPhotos) D.aboutPhotos=[];
+  applyHiddenTabs();
+  initAboutGallery();
   // Apply saved hero colors + photo
   const s=D.heroBgSettings||{};
   applyHeroTextColor(s.textColor||'#ffffff');
@@ -2438,7 +2576,7 @@ function renderAll(){
   if(active==='calendar') rCalendar();
   if(active==='publications') rPublications();
   if(active==='resources') rResources();
-  if(active==='analytics'&&isAdmin) rAnalytics();
+  if(active==='analytics') rAnalytics();
 }
 
 /* ══════════════════════════════════════════════════
@@ -2632,6 +2770,11 @@ function openEvTypeManager(){
   if(!D.calEventTypes) D.calEventTypes=[...DEFAULT_EV_TYPES];
   if(!D.publications) D.publications=[];
   if(!D.resources) D.resources=[];
+  if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
+  if(!D.hiddenTabs) D.hiddenTabs=['publications'];
+  if(!D.aboutPhotos) D.aboutPhotos=[];
+  applyHiddenTabs();
+  initAboutGallery();
   renderEvTypeList();
   openModal('evTypeManagerModal');
 }
@@ -2654,6 +2797,11 @@ async function addEvType(){
   if(!D.calEventTypes) D.calEventTypes=[...DEFAULT_EV_TYPES];
   if(!D.publications) D.publications=[];
   if(!D.resources) D.resources=[];
+  if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
+  if(!D.hiddenTabs) D.hiddenTabs=['publications'];
+  if(!D.aboutPhotos) D.aboutPhotos=[];
+  applyHiddenTabs();
+  initAboutGallery();
   if(D.calEventTypes.find(t=>t.id===id)){alert('Type ID already exists.');return}
   // Derive lighter bg color (mix with white)
   const r=parseInt(color.slice(1,3),16),g=parseInt(color.slice(3,5),16),b=parseInt(color.slice(5,7),16);
@@ -2802,13 +2950,18 @@ function gotoRecDeadline(recId){
 function openEventDetail(evEncoded){
   let ev;
   try{ ev=JSON.parse(decodeURIComponent(evEncoded)); }catch(e){ return; }
+  // Admin + non-auto events: open editor directly
+  if(isAdmin&&!ev.autoGen&&ev.id&&!ev.recId){
+    openEventForm(ev.id); return;
+  }
   const typeObj=getEvType(ev.type);
+  const timeStr=ev.time?(ev.timeEnd?' '+ev.time+'–'+ev.timeEnd:' at '+ev.time):'';
   const dateStr=ev.endDate&&ev.endDate>ev.date
     ? `${new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric'})} – ${new Date(ev.endDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`
     : new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   document.getElementById('confirmMsg').textContent=ev.title;
   document.getElementById('confirmSub').innerHTML=
-    `<b>${dateStr}</b>${ev.time?' at '+ev.time:''}<br>
+    `<b>${dateStr}</b>${timeStr}<br>
      <span style="display:inline-block;margin-top:4px;padding:2px 10px;border-radius:10px;font-size:.78rem;background:${typeObj.bg};color:${typeObj.text}">${typeObj.label}</span>
      ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left">'+ev.desc+'</p>':''}
      ${ev.link?'<br><a href="'+ev.link+'" target="_blank" style="color:#2563eb">🔗 More info</a>':''}`;
@@ -2831,12 +2984,13 @@ function openEventForm(id=null){
       document.getElementById('evEndDate').value=ev.endDate||'';
       document.getElementById('evType').value=ev.type;
       document.getElementById('evTime').value=ev.time||'';
+      document.getElementById('evTimeEnd').value=ev.timeEnd||'';
       document.getElementById('evDesc').value=ev.desc||'';
       document.getElementById('evLink').value=ev.link||'';
       document.getElementById('evRecur').value=ev.recur||'none';
     }
   } else {
-    ['evId','evTitle','evTime','evDesc','evLink','evEndDate'].forEach(f=>document.getElementById(f).value='');
+    ['evId','evTitle','evTime','evTimeEnd','evDesc','evLink','evEndDate'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('evDate').value=new Date().toISOString().slice(0,10);
     document.getElementById('evRecur').value='none';
     if(document.getElementById('evType').options.length) document.getElementById('evType').selectedIndex=0;
@@ -2857,6 +3011,7 @@ async function saveEvent(){
   const base={id,title,date,endDate:endDate&&endDate>date?endDate:null,
     type:document.getElementById('evType').value,
     time:document.getElementById('evTime').value||null,
+    timeEnd:document.getElementById('evTimeEnd').value||null,
     desc:document.getElementById('evDesc').value.trim()||null,
     link:document.getElementById('evLink').value.trim()||null,
     recur};
@@ -3227,6 +3382,149 @@ function exportIcs(scope){
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+
+/* ══════════════════════════════════════════════════
+   ABOUT GALLERY
+══════════════════════════════════════════════════ */
+let _aboutGalleryIdx=0; let _aboutGalleryTimer=null;
+function initAboutGallery(){
+  const photos=(D&&D.aboutPhotos)||[];
+  const el=document.getElementById('aboutGallery');
+  const emptyEl=document.getElementById('aboutGalleryEmpty');
+  const inner=document.getElementById('aboutGalleryInner');
+  const track=document.getElementById('aboutGalleryTrack');
+  const dots=document.getElementById('aboutGalleryDots');
+  if(!el||!track) return;
+  if(!photos.length){ el.style.display='none'; if(emptyEl) emptyEl.style.display=isAdmin?'block':'none'; return; }
+  if(emptyEl) emptyEl.style.display='none';
+  el.style.display='block';
+  const n=photos.length;
+  track.innerHTML=photos.map((p,i)=>`
+    <div class="about-gallery-slide"><img src="${p}" alt="DrAL Lab" loading="lazy" onclick="openLightbox(${JSON.stringify(photos).replace(/"/g,"'")},${i})"></div>`).join('');
+  dots.innerHTML=n>1?photos.map((_,i)=>`<button class="about-gallery-dot${i===0?' on':''}" onclick="aboutGalleryGo(${i})"></button>`).join(''):'';
+  const cnt=document.getElementById('aboutGalleryCount');
+  if(cnt){cnt.textContent=n>1?'1/'+n:'';cnt.style.display=n>1?'block':'none';}
+  _aboutGalleryIdx=0; track.style.transform='translateX(0)';
+  clearInterval(_aboutGalleryTimer);
+  if(n>1) _aboutGalleryTimer=setInterval(()=>aboutGalleryGo((_aboutGalleryIdx+1)%n),6000);
+}
+function aboutGalleryGo(idx){
+  const photos=(D&&D.aboutPhotos)||[];
+  const inner=document.getElementById('aboutGalleryInner');
+  const track=document.getElementById('aboutGalleryTrack');
+  if(!track||!inner||!photos.length) return;
+  const n=photos.length;
+  _aboutGalleryIdx=(idx+n)%n;
+  const w=inner.getBoundingClientRect().width||inner.offsetWidth||800;
+  track.style.transform=`translateX(${-_aboutGalleryIdx*w}px)`;
+  document.querySelectorAll('.about-gallery-dot').forEach((d,i)=>d.classList.toggle('on',i===_aboutGalleryIdx));
+  const cnt=document.getElementById('aboutGalleryCount');
+  if(cnt){cnt.textContent=n>1?`${_aboutGalleryIdx+1}/${n}`:'';cnt.style.display=n>1?'block':'none';}
+}
+function aboutGalleryStep(dir){ aboutGalleryGo(_aboutGalleryIdx+dir); }
+
+/* ══════════════════════════════════════════════════
+   NAV TAB MANAGER
+══════════════════════════════════════════════════ */
+const NAV_TABS=[
+  {id:'about',     label:'About',        alwaysOn:true},
+  {id:'members',   label:'Members',      alwaysOn:true},
+  {id:'projects',  label:'Projects',     alwaysOn:true},
+  {id:'recruiting',label:'Recruiting',   alwaysOn:true},
+  {id:'news',      label:'News',         alwaysOn:true},
+  {id:'calendar',  label:'Calendar',     alwaysOn:false},
+  {id:'publications',label:'Publications',alwaysOn:false},
+  {id:'resources', label:'Resources',    alwaysOn:false},
+  {id:'analytics', label:'Analytics',    alwaysOn:false},
+];
+function applyHiddenTabs(){
+  const hidden=new Set(D.hiddenTabs||['publications']);
+  NAV_TABS.forEach(tab=>{
+    const btn=document.getElementById('navBtn-'+tab.id);
+    if(btn){
+      btn.style.display=(!tab.alwaysOn&&hidden.has(tab.id))?'none':'';
+    }
+  });
+  // Show Nav Manager btn for admin
+  const mgrBtn=document.getElementById('navMgrBtn');
+  if(mgrBtn) mgrBtn.style.display=isAdmin?'inline-flex':'none';
+}
+function openNavManager(){
+  const hidden=new Set(D.hiddenTabs||[]);
+  document.getElementById('navTabList').innerHTML=NAV_TABS.filter(t=>!t.alwaysOn).map(tab=>`
+    <div class="nav-tab-item">
+      <label class="nav-tab-toggle">
+        <input type="checkbox" ${!hidden.has(tab.id)?'checked':''} onchange="toggleNavTab('${tab.id}',this.checked)">
+        <span class="nav-tab-slider"></span>
+      </label>
+      <span style="font-size:.9rem;font-weight:500">${tab.label}</span>
+      <span style="font-size:.75rem;color:var(--muted);margin-left:auto">${hidden.has(tab.id)?'Hidden':'Visible'}</span>
+    </div>`).join('');
+  openModal('navManagerModal');
+}
+async function toggleNavTab(id, visible){
+  if(!D.hiddenTabs) D.hiddenTabs=[];
+  if(visible) D.hiddenTabs=D.hiddenTabs.filter(t=>t!==id);
+  else if(!D.hiddenTabs.includes(id)) D.hiddenTabs.push(id);
+  await saveToFirebase();
+  applyHiddenTabs();
+  // Refresh label text in manager
+  const hidden=new Set(D.hiddenTabs);
+  document.querySelectorAll('#navTabList .nav-tab-item').forEach((el,i)=>{
+    const tab=NAV_TABS.filter(t=>!t.alwaysOn)[i];
+    if(tab){
+      const span=el.querySelector('span:last-child');
+      if(span) span.textContent=hidden.has(tab.id)?'Hidden':'Visible';
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   NEWS CATEGORY MANAGER
+══════════════════════════════════════════════════ */
+const DEFAULT_NEWS_CATS=['Publication','Award','Event','Announcement','Other'];
+function getNewsCategories(){ return (D&&D.newsCategories&&D.newsCategories.length)?D.newsCategories:[...DEFAULT_NEWS_CATS]; }
+
+function populateNfCat(){
+  const sel=document.getElementById('nfCat'); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=getNewsCategories().map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+
+function openNewsCatManager(){
+  if(!D.newsCategories) D.newsCategories=[...DEFAULT_NEWS_CATS];
+  renderNewsCatList();
+  openModal('newsCatManagerModal');
+}
+function renderNewsCatList(){
+  const cats=D.newsCategories||DEFAULT_NEWS_CATS;
+  document.getElementById('newsCatList').innerHTML=cats.map((cat,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;background:var(--green-pale);color:var(--green);padding:5px 11px;border-radius:20px;font-size:.79rem;font-weight:500">
+      ${cat}<button onclick="removeNewsCategory(${i})" style="background:none;border:none;color:inherit;cursor:pointer;font-size:.9rem;padding:0;line-height:1">×</button>
+    </div>`).join('');
+}
+async function addNewsCategory(){
+  const v=document.getElementById('newCatInput').value.trim(); if(!v) return;
+  if(!D.newsCategories) D.newsCategories=[...DEFAULT_NEWS_CATS];
+  if(D.newsCategories.includes(v)){alert('Category already exists.');return}
+  D.newsCategories.push(v);
+  document.getElementById('newCatInput').value='';
+  renderNewsCatList();
+  await saveToFirebase();
+  populateNfCat();
+}
+async function removeNewsCategory(idx){
+  if(!D.newsCategories) return;
+  D.newsCategories.splice(idx,1);
+  renderNewsCatList();
+  await saveToFirebase();
+  populateNfCat();
+}
+
+/* ══════════════════════════════════════════════════
+   CALENDAR: edit on click (admin), news→calendar sync
+══════════════════════════════════════════════════ */
 
 
 /* ══════════════════════════════════════════════════
