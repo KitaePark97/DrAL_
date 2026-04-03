@@ -11,6 +11,7 @@
 <!-- ═══ FIREBASE SDK ═══ -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <style>
 /* ═══════════════════════════ TOKENS ═══════════════════════════ */
@@ -153,7 +154,7 @@ nav{
 .t-Health{background:#dcfce7;color:#166534}.t-Mobility{background:#dbeafe;color:#1e40af}
 .t-Equity{background:#fee2e2;color:#991b1b}.t-UrbanDesign{background:#ede9fe;color:#5b21b6}.t-Aging{background:#fef3c7;color:#92400e}
 .pc-title{font-family:'Cormorant Garamond',serif;font-size:1.28rem;font-weight:600;line-height:1.3}
-.pc-desc{margin:10px 0 18px;font-size:.82rem;color:var(--muted);line-height:1.65}
+.pc-desc{margin:10px 0 18px;font-size:.82rem;color:var(--muted);line-height:1.65;white-space:pre-line}
 .pc-body{padding:0 24px 18px}
 .team-lbl{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
@@ -182,7 +183,7 @@ nav{
 .rc-badges{display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0}
 .rbg{padding:3px 12px;border-radius:10px;font-size:.7rem;font-weight:500}
 .rbg-t{background:var(--green-pale);color:var(--green)}.rbg-u{background:var(--red-pale);color:var(--red)}
-.rc-desc{margin-top:13px;font-size:.83rem;color:var(--muted);line-height:1.65}
+.rc-desc{margin-top:13px;font-size:.83rem;color:var(--muted);line-height:1.65;white-space:pre-line}
 .rc-foot{margin-top:15px;padding-top:13px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .rc-meta{display:flex;flex-wrap:wrap;gap:18px}
 .rc-meta span{font-size:.77rem;color:var(--muted)}
@@ -201,7 +202,7 @@ nav{
 .cat-Grant{background:#fffbeb;color:#b45309}.cat-Media{background:#f0f9ff;color:#0369a1}
 .news-date{font-size:.78rem;color:var(--muted)}
 .news-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;margin-bottom:10px}
-.news-body{font-size:.86rem;color:var(--muted);line-height:1.7}
+.news-body{font-size:.86rem;color:var(--muted);line-height:1.7;white-space:pre-line}
 .news-author{font-size:.76rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 /* Lightbox */
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;align-items:center;justify-content:center;cursor:zoom-out}
@@ -299,8 +300,8 @@ nav{
 .about-hero{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:48px;margin-bottom:32px;position:relative}
 .about-tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green-l);font-weight:600;margin-bottom:14px}
 .about-tagline{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--green);line-height:1.3;margin-bottom:18px}
-.about-desc{font-size:.92rem;line-height:1.8;color:var(--text);margin-bottom:16px}
-.about-mission{font-size:.88rem;line-height:1.75;color:var(--muted);border-left:3px solid var(--gold);padding-left:18px}
+.about-desc{font-size:.92rem;line-height:1.8;color:var(--text);margin-bottom:16px;white-space:pre-line}
+.about-mission{font-size:.88rem;line-height:1.75;color:var(--muted);border-left:3px solid var(--gold);padding-left:18px;white-space:pre-line}
 .about-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-bottom:32px}
 .acard{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:24px;text-align:center}
 .acard-icon{font-size:2rem;margin-bottom:10px}
@@ -498,6 +499,18 @@ body.dark .fg input,.dark .fg select,.dark .fg textarea{background:var(--white);
 .location-map-link{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:#2563eb;margin-top:5px;text-decoration:none}
 .location-map-link:hover{text-decoration:underline}
 .gmaps-preview{width:100%;height:180px;border-radius:9px;border:1px solid var(--border);margin-top:10px;display:none}
+
+/* Drag & Drop */
+.mc.dragging,.pc.dragging{opacity:.35;transform:scale(.97)}
+.mc.drag-over,.pc.drag-over{outline:2.5px dashed var(--gold);outline-offset:2px;background:var(--gold-pale)}
+.drag-handle{position:absolute;top:7px;left:7px;cursor:grab;color:rgba(0,0,0,.25);font-size:.95rem;line-height:1;display:none;z-index:5;padding:2px;border-radius:4px;transition:color .15s}
+.drag-handle:hover{color:var(--gold)}
+.admin-mode .drag-handle{display:block}
+.mc{position:relative}
+.pc{position:relative}
+/* Drag hint banner */
+.drag-hint{font-size:.72rem;color:var(--muted);display:none;align-items:center;gap:5px;padding:6px 12px;background:var(--bg);border-radius:8px;border:1px dashed var(--border);margin-bottom:14px}
+.admin-mode .drag-hint{display:flex}
 </style>
 </head>
 <body>
@@ -633,6 +646,7 @@ const FIREBASE_CONFIG = {
   <div class="admin-bar" id="mAdminBar">
     <span>🟢 Admin Mode — Use ✏️/🗑 buttons to edit/delete, or add a new member</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="add-btn" style="background:#6b7280" onclick="resetMemberOrder()">↺ Reset Order</button>
       <button class="add-btn" style="background:#0369a1" onclick="openRoleManager()">⚙ Manage Roles</button>
       <button class="add-btn" onclick="openMemberForm()">+ Add Member</button>
     </div>
@@ -641,6 +655,7 @@ const FIREBASE_CONFIG = {
     <input type="text" id="ms" placeholder="Search members…" oninput="rMembers()">
     <button class="fb on" onclick="mf('all',this)">All</button>
   </div>
+  <div class="drag-hint" id="mDragHint">⠿ Drag member cards to reorder. Order is saved automatically.</div>
   <div class="mgrid" id="mGrid"></div>
 </div>
 
@@ -650,6 +665,7 @@ const FIREBASE_CONFIG = {
   <div class="admin-bar" id="pAdminBar">
     <span>🟢 Admin Mode — Edit projects, manage team members, add new projects</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="add-btn" style="background:#6b7280" onclick="resetProjectOrder()">↺ Reset Order</button>
       <button class="add-btn" style="background:#0369a1" onclick="openTagManager()">⚙ Manage Tags</button>
       <button class="add-btn" onclick="openProjForm()">+ Add Project</button>
     </div>
@@ -658,6 +674,18 @@ const FIREBASE_CONFIG = {
     <input type="text" id="ps" placeholder="Search projects…" oninput="rProjects()">
     <button class="fb on" onclick="pf('all',this)">All</button>
   </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center">
+    <span style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Status</span>
+    <button class="fb on" id="pStatusAll" onclick="pStatusFilter('all',this)">All</button>
+    <button class="fb" id="pStatusActive" onclick="pStatusFilter('Active',this)">Active</button>
+    <button class="fb" id="pStatusCompleted" onclick="pStatusFilter('Completed',this)">Completed</button>
+    <button class="fb" id="pStatusPaused" onclick="pStatusFilter('Paused',this)">Paused</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;align-items:center">
+    <span style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Period</span>
+    <div id="projectPeriodBar" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+  <div class="drag-hint" id="pDragHint">⠿ Drag project cards to reorder. Order is saved automatically.</div>
   <div class="pgrid" id="pGrid"></div>
 </div>
 
@@ -693,6 +721,10 @@ const FIREBASE_CONFIG = {
       <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
     </div>
   </div>
+  <div class="fbar" style="margin-bottom:12px">
+    <input type="text" id="newsSearch" placeholder="Search news…" oninput="rNews()" style="flex:1;min-width:180px">
+  </div>
+  <div id="newsCatFilterBar" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px"></div>
   <div class="news-feed" id="newsFeed"></div>
 </div>
 
@@ -898,6 +930,10 @@ const FIREBASE_CONFIG = {
     <div class="fr">
       <div class="fg"><label>Tags (comma-separated)</label><input id="pfTags" type="text" placeholder="Health, Equity, Aging"></div>
       <div class="fg"><label>Status</label><select id="pfStatus"><option>Active</option><option>Completed</option><option>Paused</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Start Year</label><input id="pfStartYear" type="number" placeholder="2021" min="1990" max="2040" style="width:100%"></div>
+      <div class="fg"><label>End Year</label><input id="pfEndYear" type="number" placeholder="2025" min="1990" max="2040" style="width:100%"></div>
     </div>
     <div class="fg"><label>Link URL</label><input id="pfDrive" type="url" placeholder="https://…"></div>
     <div class="fg">
@@ -1363,10 +1399,13 @@ const PW_HASH = btoa('dral2026');
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 let db, DOC_REF;
 
+let storage, STORAGE_REF;
 if(IS_CONFIGURED) {
   firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
   DOC_REF = db.collection('lab').doc('data');
+  storage = firebase.storage();
+  STORAGE_REF = storage.ref();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1374,7 +1413,7 @@ if(IS_CONFIGURED) {
 ══════════════════════════════════════════════════ */
 let D = null;
 let isAdmin = false;
-let mFilter='all', pFilter='all', rFilter='all';
+let mFilter='all', pFilter='all', rFilter='all', pStatusF='all', pPeriodF='all';
 let _viewMemberId = null;
 let _pickedMemberIds = [];
 let showClosedRec = false;
@@ -1445,6 +1484,12 @@ async function loadFromFirebase() {
     ]);
     if(snap.exists) {
       D = snap.data();
+      // Migrate: rename "Deadline" type label to "Recruiting"
+      if(D.calEventTypes) {
+        let migrated=false;
+        D.calEventTypes.forEach(t=>{ if(t.id==='deadline'&&t.label==='Deadline'){t.label='Recruiting';migrated=true;} });
+        if(migrated) DOC_REF.set(D).catch(()=>{});
+      }
     } else {
       // First time: seed data to Firebase
       setLoading('Setting up database (first time)…');
@@ -1532,6 +1577,10 @@ function startRealtimeListener() {
     snap => {
       if(snap.exists) {
         D = snap.data();
+        // Migrate label on live updates too
+        if(D.calEventTypes) {
+          D.calEventTypes.forEach(t=>{ if(t.id==='deadline'&&t.label==='Deadline') t.label='Recruiting'; });
+        }
         renderAll();
       }
     },
@@ -1653,13 +1702,18 @@ function addAboutPhotoUrl(){
   const v=document.getElementById('afPhotoUrl').value.trim(); if(!v) return;
   _afPhotos.push(v); document.getElementById('afPhotoUrl').value=''; renderAfPhotoList();
 }
-function addAboutPhotoFiles(input){
-  Array.from(input.files).forEach(file=>{
-    compressImage(file,1200,800,0.85,dataUrl=>{
-      _afPhotos.push(dataUrl); renderAfPhotoList();
-    });
-  });
-  input.value='';
+async function addAboutPhotoFiles(input){
+  const files=Array.from(input.files);
+  const btn=input.closest('label');
+  if(btn) btn.style.opacity='0.5';
+  try{
+    const urls=await Promise.all(files.map(f=>uploadImageToStorage(f,'about',1400,900,0.88)));
+    _afPhotos.push(...urls);
+    renderAfPhotoList();
+  }finally{
+    if(btn) btn.style.opacity='';
+    input.value='';
+  }
 }
 function openAboutEdit(){
   _afPhotos=[...(D.aboutPhotos||[])];
@@ -1722,13 +1776,24 @@ function rMembers(){
       (mFilter==='all'||m.role===mFilter)&&
       (!q||m.name.toLowerCase().includes(q)||(m.advisor||'').toLowerCase().includes(q));
   });
-  list = sortMembers(list);
+  // If any member has a custom order set, use it; otherwise use role-based sort
+  const hasCustomOrder = list.some(m => m.order != null);
+  list = hasCustomOrder
+    ? [...list].sort((a,b) => (a.order??9999) - (b.order??9999))
+    : sortMembers(list);
   const g=document.getElementById('mGrid');
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">${isFormer?'🎓':'👤'}</div><p>${isFormer?'No former members added yet.':'No members found.'}</p></div>`;return}
   g.innerHTML=list.map(m=>{
     const subLbl = m.subRole?`<span class="rbadge" style="background:#fef3c7;color:#92400e;margin-left:3px">${m.subRole}</span>`:'';
     return `
-    <div class="mc" onclick="openMemberView(${m.id})">
+    <div class="mc" data-id="${m.id}" draggable="true"
+         ondragstart="dndStart(event,'member',${m.id})"
+         ondragover="dndOver(event)"
+         ondragleave="dndLeave(event)"
+         ondrop="dndDrop(event,'member')"
+         ondragend="dndEnd(event,'member')"
+         onclick="openMemberView(${m.id})">
+      <div class="drag-handle" onclick="event.stopPropagation()" title="Drag to reorder">⠿</div>
       <div class="card-admin" onclick="event.stopPropagation()">
         <button class="ica ica-edit" onclick="openMemberForm(${m.id})">✏️</button>
         <button class="ica ica-del"  onclick="confirmDelete('member',${m.id})">🗑</button>
@@ -1848,49 +1913,80 @@ function openMemberForm(id=null){
 }
 
 /**
- * Compress an image file to a smaller base64 JPEG.
- * Automatically reduces quality further if result exceeds targetMaxBytes.
+ * Compress a file to a canvas Blob (JPEG), then upload to Firebase Storage.
+ * Returns a Promise that resolves to the public download URL.
+ * Falls back to base64 if Storage is not available.
  */
-function compressImage(file, maxW, maxH, quality, callback, targetMaxBytes=300000){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      let w=img.width, h=img.height;
-      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
-      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
-      const canvas=document.createElement('canvas');
-      canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      // Try progressively lower quality until under targetMaxBytes
-      let q=quality;
-      let result=canvas.toDataURL('image/jpeg',q);
-      // Each base64 char ≈ 0.75 bytes
-      while(result.length*0.75>targetMaxBytes && q>0.3){
-        q=Math.round((q-0.12)*100)/100;
-        result=canvas.toDataURL('image/jpeg',q);
-      }
-      callback(result);
+async function uploadImageToStorage(file, folder='uploads', maxW=1200, maxH=1000, quality=0.85){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = async () => {
+        // Resize
+        let w = img.width, h = img.height;
+        if(w > maxW){ h = Math.round(h*maxW/w); w = maxW; }
+        if(h > maxH){ w = Math.round(w*maxH/h); h = maxH; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+        // Convert to blob
+        canvas.toBlob(async blob => {
+          if(IS_CONFIGURED && storage) {
+            // Upload to Firebase Storage
+            const ext = 'jpg';
+            const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+            try {
+              const ref = STORAGE_REF.child(path);
+              const snap = await ref.put(blob, { contentType: 'image/jpeg' });
+              const url = await snap.ref.getDownloadURL();
+              resolve(url);
+            } catch(err) {
+              console.warn('Storage upload failed, falling back to base64:', err);
+              // Fallback: base64 (may hit Firestore limit for large images)
+              const reader2 = new FileReader();
+              reader2.onload = ev => resolve(ev.target.result);
+              reader2.readAsDataURL(blob);
+            }
+          } else {
+            // No storage: use base64
+            const reader2 = new FileReader();
+            reader2.onload = ev => resolve(ev.target.result);
+            reader2.readAsDataURL(blob);
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
     };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
 }
 
-function handlePhotoUpload(input){
+// Legacy sync wrapper kept for any remaining callers
+function compressImage(file, maxW, maxH, quality, callback){
+  uploadImageToStorage(file, 'uploads', maxW, maxH, quality).then(callback);
+}
+
+async function handlePhotoUpload(input){
   const file=input.files[0]; if(!file) return;
-  compressImage(file,400,400,0.8,dataUrl=>{
-    document.getElementById('mfPhotoUrl').value=dataUrl;
+  const lbl=input.closest('label')||input.parentNode;
+  const origText=lbl?lbl.innerText:'';
+  if(lbl) lbl.innerText='Uploading…';
+  try{
+    const url=await uploadImageToStorage(file,'members',400,400,0.85);
+    document.getElementById('mfPhotoUrl').value=url;
     document.getElementById('mfPhotoPreview').style.display='block';
-    document.getElementById('mfPhotoImg').src=dataUrl;
-  });
+    document.getElementById('mfPhotoImg').src=url;
+  }finally{
+    if(lbl) lbl.innerText=origText;
+  }
 }
 
-function handleNewsPhotoUpload(input){
+async function handleNewsPhotoUpload(input){
   const file=input.files[0]; if(!file) return;
-  compressImage(file,800,600,0.82,dataUrl=>{
-    document.getElementById('nfPhoto').value=dataUrl;
-  });
+  const url=await uploadImageToStorage(file,'news',900,700,0.85);
+  document.getElementById('nfPhoto').value=url;
 }
 
 async function saveMember(){
@@ -1953,14 +2049,64 @@ function initTagFilters(){
 
 function pf(f,btn){pFilter=f;document.querySelectorAll('#projectFilterBar .fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');rProjects()}
 
+function pStatusFilter(f,btn){
+  pStatusF=f;
+  document.querySelectorAll('#pStatusAll,#pStatusActive,#pStatusCompleted,#pStatusPaused').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  rProjects();
+}
+
+function initPeriodFilters(){
+  if(!D) return;
+  // Build list of years from all projects
+  const years=new Set();
+  D.projects.forEach(p=>{
+    if(p.startYear) years.add(p.startYear);
+    if(p.endYear) years.add(p.endYear);
+    // Also infer from funding string if no explicit year
+  });
+  const sorted=[...years].sort((a,b)=>b-a);
+  const bar=document.getElementById('projectPeriodBar');
+  if(!bar) return;
+  bar.innerHTML='';
+  if(!sorted.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  // "All" button
+  const allBtn=document.createElement('button');
+  allBtn.className='fb'+(pPeriodF==='all'?' on':'');
+  allBtn.textContent='All';
+  allBtn.onclick=()=>{ pPeriodF='all'; document.querySelectorAll('#projectPeriodBar .fb').forEach(b=>b.classList.remove('on')); allBtn.classList.add('on'); rProjects(); };
+  bar.appendChild(allBtn);
+  sorted.forEach(yr=>{
+    const b=document.createElement('button');
+    b.className='fb'+(pPeriodF===yr?' on':'');
+    b.textContent=yr;
+    b.onclick=()=>{ pPeriodF=yr; document.querySelectorAll('#projectPeriodBar .fb').forEach(b2=>b2.classList.remove('on')); b.classList.add('on'); rProjects(); };
+    bar.appendChild(b);
+  });
+}
+
 function rProjects(){
   if(!D) return;
   initTagFilters();
+  initPeriodFilters();
   const q=document.getElementById('ps').value.toLowerCase();
-  const list=D.projects.filter(p=>
-    (pFilter==='all'||p.tags.includes(pFilter))&&
-    (!q||p.title.toLowerCase().includes(q)||p.desc.toLowerCase().includes(q))
-  );
+  let list=D.projects.filter(p=>{
+    if(pFilter!=='all'&&!p.tags.includes(pFilter)) return false;
+    if(pStatusF!=='all'&&p.status!==pStatusF) return false;
+    if(pPeriodF!=='all'){
+      const hasYears=p.startYear||p.endYear;
+      if(hasYears){
+        const start=p.startYear||0, end=p.endYear||9999;
+        if(pPeriodF<start||pPeriodF>end) return false;
+      }
+    }
+    if(q&&!p.title.toLowerCase().includes(q)&&!p.desc.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  // Custom order if set
+  const hasCustomProjOrder = list.some(p => p.order != null);
+  if(hasCustomProjOrder) list = [...list].sort((a,b) => (a.order??9999) - (b.order??9999));
   const g=document.getElementById('pGrid');
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
   g.innerHTML=list.map(p=>{
@@ -1976,7 +2122,13 @@ function rProjects(){
     if(p.status==='Completed'){dotCls='dot-c';statusTxt='Completed';}
     else if(p.recruiting){dotCls='dot-r';statusTxt='Recruiting';}
     return `
-    <div class="pc">
+    <div class="pc" data-id="${p.id}" draggable="true"
+         ondragstart="dndStart(event,'project',${p.id})"
+         ondragover="dndOver(event)"
+         ondragleave="dndLeave(event)"
+         ondrop="dndDrop(event,'project')"
+         ondragend="dndEnd(event,'project')">
+      <div class="drag-handle" title="Drag to reorder">⠿</div>
       <div class="pc-head">
         <div class="tags">${tags}</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -2025,10 +2177,12 @@ function openProjForm(id=null){
     document.getElementById('pfTags').value=p.tags.join(', ');
     document.getElementById('pfStatus').value=p.status;
     document.getElementById('pfDrive').value=p.driveUrl||'';
+    document.getElementById('pfStartYear').value=p.startYear||'';
+    document.getElementById('pfEndYear').value=p.endYear||'';
     _pfPhotos=[...(p.photos||[]),...(p.photoUrl&&!p.photos?[p.photoUrl]:[])].filter(Boolean);
     document.getElementById('pfRec').checked=p.recruiting;
   } else {
-    ['pfId','pfTitle','pfAbbr','pfDesc','pfPi','pfFunding','pfTags','pfDrive'].forEach(f=>document.getElementById(f).value='');
+    ['pfId','pfTitle','pfAbbr','pfDesc','pfPi','pfFunding','pfTags','pfDrive','pfStartYear','pfEndYear'].forEach(f=>document.getElementById(f).value='');
     _pfPhotos=[];
     document.getElementById('pfStatus').value='Active';
     document.getElementById('pfRec').checked=false;
@@ -2074,6 +2228,8 @@ async function saveProject(){
     funding:document.getElementById('pfFunding').value.trim()||null,
     status:document.getElementById('pfStatus').value,
     driveUrl:document.getElementById('pfDrive').value.trim()||null,
+    startYear:parseInt(document.getElementById('pfStartYear').value)||null,
+    endYear:parseInt(document.getElementById('pfEndYear').value)||null,
     photos:[..._pfPhotos],
     photoUrl:null,
     recruiting:document.getElementById('pfRec').checked,
@@ -2215,13 +2371,18 @@ function addProjPhotoUrl(){
   const v=document.getElementById('pfPhotoUrl').value.trim(); if(!v) return;
   _pfPhotos.push(v); document.getElementById('pfPhotoUrl').value=''; renderPfPhotoList();
 }
-function addProjPhotoFiles(input){
-  Array.from(input.files).forEach(file=>{
-    compressImage(file,900,700,0.82,dataUrl=>{
-      _pfPhotos.push(dataUrl); renderPfPhotoList();
-    });
-  });
-  input.value='';
+async function addProjPhotoFiles(input){
+  const files=Array.from(input.files);
+  const btn=input.closest('label');
+  if(btn) btn.style.opacity='0.5';
+  try{
+    const urls=await Promise.all(files.map(f=>uploadImageToStorage(f,'projects',1200,900,0.85)));
+    _pfPhotos.push(...urls);
+    renderPfPhotoList();
+  }finally{
+    if(btn) btn.style.opacity='';
+    input.value='';
+  }
 }
 function handleRecPhotoUpload(input){
   const f=input.files[0]; if(!f) return;
@@ -2490,13 +2651,12 @@ async function uploadHeroGalleryPhotos(input){
   if(!D.heroBgSettings) D.heroBgSettings={mode:'color',color:'#2d4a3e',textColor:'#ffffff',accentColor:'#a5d4c4',heroPhotos:[]};
   if(!D.heroBgSettings.heroPhotos) D.heroBgSettings.heroPhotos=[];
   let loaded=0;
-  files.forEach(file=>{
-    compressImage(file,1200,900,0.82,async dataUrl=>{
-      D.heroBgSettings.heroPhotos.push(dataUrl);
-      loaded++;
-      if(loaded===files.length){ await saveToFirebase(); initHeroGallery(); renderHeroGalleryMgr(); }
-    });
-  });
+  const uploadAll=files.map(f=>uploadImageToStorage(f,'hero',1200,900,0.85));
+  try{
+    const urls=await Promise.all(uploadAll);
+    D.heroBgSettings.heroPhotos.push(...urls);
+    await saveToFirebase(); initHeroGallery(); renderHeroGalleryMgr();
+  }catch(e){ console.error('Hero upload error',e); }
   input.value='';
 }
 async function removeHeroGalleryPhoto(idx){
@@ -2537,11 +2697,30 @@ function getNewsCatStyle(cat){
   return `background:${bg};color:${text}`;
 }
 
+let newsCatF='all';
+function newsSetCat(cat, btn){
+  newsCatF=cat;
+  document.querySelectorAll('#newsCatFilterBar .fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  rNews();
+}
+function buildNewsCatFilterBar(){
+  const bar=document.getElementById('newsCatFilterBar'); if(!bar) return;
+  const cats=getNewsCategories();
+  const allActive=newsCatF==='all';
+  bar.innerHTML=`<button class="fb${allActive?' on':''}" onclick="newsSetCat('all',this)">All</button>`
+    +cats.map(cat=>`<button class="fb${newsCatF===cat?' on':''}" onclick="newsSetCat('${cat.replace(/'/g,"\\'")}',this)" style="${getNewsCatStyle(cat)};border:1.5px solid transparent;opacity:${newsCatF!=='all'&&newsCatF!==cat?0.55:1}">${cat}</button>`).join('');
+}
 function rNews(){
   if(!D) return;
+  buildNewsCatFilterBar();
   const feed=document.getElementById('newsFeed');
-  const sorted=[...D.news].sort((a,b)=>new Date(b.date)-new Date(a.date));
-  if(!sorted.length){feed.innerHTML=`<div class="empty"><div class="empty-icon">📰</div><p>No news yet.</p></div>`;return}
+  const q=(document.getElementById('newsSearch')?.value||'').toLowerCase().trim();
+  const sorted=[...D.news]
+    .filter(n=>(newsCatF==='all'||n.category===newsCatF)&&
+      (!q||n.title.toLowerCase().includes(q)||n.content.toLowerCase().includes(q)||(n.author||'').toLowerCase().includes(q)))
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!sorted.length){feed.innerHTML=`<div class="empty"><div class="empty-icon">📰</div><p>No news found.</p></div>`;return}
   feed.innerHTML=sorted.map(n=>{
     const photos=[...(n.photos||[]),...(n.photoUrl&&!n.photos?[n.photoUrl]:[])].filter(Boolean);
     const hasPhotos=photos.length>0;
@@ -2590,16 +2769,18 @@ function addNewsPhotoUrl(){
   document.getElementById('nfPhotoUrl').value='';
   renderNfPhotoList();
 }
-function addNewsPhotoFiles(input){
+async function addNewsPhotoFiles(input){
   const files=Array.from(input.files);
-  let loaded=0;
-  files.forEach(file=>{
-    compressImage(file,900,700,0.82,dataUrl=>{
-      _nfPhotos.push(dataUrl); loaded++;
-      if(loaded===files.length) renderNfPhotoList();
-    });
-  });
-  input.value='';
+  const btn=input.closest('label');
+  if(btn) btn.style.opacity='0.5';
+  try{
+    const urls=await Promise.all(files.map(f=>uploadImageToStorage(f,'news',900,700,0.85)));
+    _nfPhotos.push(...urls);
+    renderNfPhotoList();
+  }finally{
+    if(btn) btn.style.opacity='';
+    input.value='';
+  }
 }
 
 function openNewsForm(id=null){
@@ -3163,7 +3344,7 @@ function openEventDetail(evEncoded){
     `<b>${dateStr}</b>${timeStr}<br>
      <span style="display:inline-block;margin-top:4px;padding:2px 10px;border-radius:10px;font-size:.78rem;background:${typeObj.bg};color:${typeObj.text}">${typeObj.label}</span>
      ${locHtml}
-     ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left;color:var(--text)">'+ev.desc+'</p>':''}
+     ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left;color:var(--text);white-space:pre-line">'+ev.desc+'</p>':''}
      ${ev.link?'<br><a href="'+ev.link+'" target="_blank" style="color:#2563eb">🔗 More info</a>':''}`;
   document.getElementById('confirmOk').style.display='none';
   document.getElementById('confirmModal').classList.add('open');
@@ -3721,6 +3902,7 @@ async function addNewsCategory(){
   renderNewsCatList();
   await saveToFirebase();
   populateNfCat();
+  buildNewsCatFilterBar();
 }
 async function removeNewsCategory(idx){
   if(!D.newsCategories) return;
@@ -3734,6 +3916,97 @@ async function removeNewsCategory(idx){
    CALENDAR: edit on click (admin), news→calendar sync
 ══════════════════════════════════════════════════ */
 
+
+/* ══════════════════════════════════════════════════
+   DRAG & DROP REORDER (Members + Projects)
+══════════════════════════════════════════════════ */
+let _dndDragId = null;
+let _dndSaveTimer = null;
+
+function dndStart(e, type, id){
+  if(!isAdmin) return;
+  _dndDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(id));
+  // Slight delay so the ghost image renders before we style the element
+  requestAnimationFrame(() => e.currentTarget.classList.add('dragging'));
+}
+
+function dndOver(e){
+  if(!isAdmin || _dndDragId == null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const card = e.currentTarget;
+  if(!card.classList.contains('drag-over')) card.classList.add('drag-over');
+}
+
+function dndLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function dndEnd(e, type){
+  e.currentTarget.classList.remove('dragging','drag-over');
+  // Clean up any lingering drag-over classes
+  const gridId = type==='member' ? 'mGrid' : 'pGrid';
+  document.querySelectorAll('#'+gridId+' .drag-over').forEach(el=>el.classList.remove('drag-over'));
+  _dndDragId = null;
+}
+
+function dndDrop(e, type){
+  e.preventDefault();
+  const card = e.currentTarget;
+  card.classList.remove('drag-over');
+  if(!isAdmin) return;
+
+  const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+  const targetId  = parseInt(card.dataset.id);
+  if(draggedId === targetId) return;
+
+  const arr = type==='member' ? D.members : D.projects;
+
+  // Get the currently visible + ordered list from the DOM
+  const gridId = type==='member' ? 'mGrid' : 'pGrid';
+  const domOrder = [...document.querySelectorAll('#'+gridId+' [data-id]')]
+    .map(el => parseInt(el.dataset.id));
+
+  // Find positions in domOrder
+  const fromIdx = domOrder.indexOf(draggedId);
+  const toIdx   = domOrder.indexOf(targetId);
+  if(fromIdx === -1 || toIdx === -1) return;
+
+  // Reorder domOrder array
+  const newOrder = [...domOrder];
+  newOrder.splice(fromIdx, 1);
+  newOrder.splice(toIdx, 0, draggedId);
+
+  // Write order values back to data
+  newOrder.forEach((id, idx) => {
+    const item = arr.find(x => x.id === id);
+    if(item) item.order = idx;
+  });
+
+  // Re-render immediately (optimistic UI)
+  if(type==='member') rMembers();
+  else rProjects();
+
+  // Debounced save (avoid too many writes while dragging)
+  clearTimeout(_dndSaveTimer);
+  _dndSaveTimer = setTimeout(async () => {
+    await saveToFirebase();
+  }, 800);
+}
+
+/* Reset custom order (restore default sort) */
+async function resetMemberOrder(){
+  D.members.forEach(m => delete m.order);
+  await saveToFirebase();
+  rMembers();
+}
+async function resetProjectOrder(){
+  D.projects.forEach(p => delete p.order);
+  await saveToFirebase();
+  rProjects();
+}
 
 /* ══════════════════════════════════════════════════
    INIT
