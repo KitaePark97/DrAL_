@@ -197,6 +197,8 @@ nav{
 .news-cat{padding:3px 12px;border-radius:10px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .cat-Publication{background:#dbeafe;color:#1e40af}.cat-Award{background:#fef3c7;color:#92400e}
 .cat-Event{background:#dcfce7;color:#166534}.cat-Announcement{background:var(--purple-pale);color:#5b21b6}.cat-Other{background:#f1f5f9;color:#475569}
+.cat-Conference{background:#ffe4e6;color:#9f1239}.cat-Workshop{background:#f0fdf4;color:#15803d}
+.cat-Grant{background:#fffbeb;color:#b45309}.cat-Media{background:#f0f9ff;color:#0369a1}
 .news-date{font-size:.78rem;color:var(--muted)}
 .news-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;margin-bottom:10px}
 .news-body{font-size:.86rem;color:var(--muted);line-height:1.7}
@@ -248,8 +250,13 @@ nav{
 .cal-nav h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--green)}
 .cal-nav-btn{background:none;border:1.5px solid var(--border);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .cal-nav-btn:hover{border-color:var(--green);color:var(--green)}
-.cal-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}
-.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:.77rem;color:var(--muted)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.cal-leg-item{display:flex;align-items:center;gap:6px;font-size:.77rem;color:var(--text);
+  padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);
+  cursor:pointer;user-select:none;transition:all .18s;font-weight:500}
+.cal-leg-item:hover{border-color:var(--green)}
+.cal-leg-item.off{opacity:.38;background:var(--bg);border-style:dashed}
+.cal-leg-item.off .cal-leg-dot{opacity:.4}
 .cal-leg-dot{width:10px;height:10px;border-radius:50%}
 .ev-form-modal .modal{max-width:460px}
 .news-content-row{display:flex;gap:16px;align-items:flex-start}
@@ -481,6 +488,16 @@ body.dark .fg input,.dark .fg select,.dark .fg textarea{background:var(--white);
 .nav-tab-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
 .nav-tab-toggle input:checked+.nav-tab-slider{background:var(--green)}
 .nav-tab-toggle input:checked+.nav-tab-slider:before{transform:translateX(18px)}
+
+/* Location fields */
+.location-row{display:flex;align-items:flex-start;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.location-icon{font-size:1.15rem;margin-top:1px;flex-shrink:0}
+.location-text{flex:1;min-width:0}
+.location-building{font-weight:500;font-size:.88rem}
+.location-room{font-size:.8rem;color:var(--muted);margin-top:1px}
+.location-map-link{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:#2563eb;margin-top:5px;text-decoration:none}
+.location-map-link:hover{text-decoration:underline}
+.gmaps-preview{width:100%;height:180px;border-radius:9px;border:1px solid var(--border);margin-top:10px;display:none}
 </style>
 </head>
 <body>
@@ -692,12 +709,7 @@ const FIREBASE_CONFIG = {
       <button class="add-btn" onclick="openEventForm()">+ Add Event</button>
     </div>
   </div>
-  <div class="cal-legend">
-    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#16a34a"></div>Lab Meeting</div>
-    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#991b1b"></div>Deadline</div>
-    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#92400e"></div>Seminar</div>
-    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:#1e40af"></div>Event</div>
-  </div>
+  <div class="cal-legend" id="calLegend"></div>
   <div class="cal-nav">
     <button class="cal-nav-btn" onclick="calNav(-1)">&#8249;</button>
     <h3 id="calTitle"></h3>
@@ -982,6 +994,17 @@ const FIREBASE_CONFIG = {
     <div class="fg"><label>Event Date/Time <span style="font-weight:400;color:var(--muted)">(optional — auto-adds to Calendar)</span></label>
       <div class="fr"><div class="fg" style="margin-bottom:0"><input id="nfEventDate" type="date"></div><div class="fg" style="margin-bottom:0"><input id="nfEventTime" type="time" placeholder="Start time"></div></div>
     </div>
+    <div class="fg">
+      <label>Location <span style="font-weight:400;color:var(--muted)">(optional — for Event-type news)</span></label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="nfBuilding" type="text" placeholder="Building or venue name">
+        <div class="fr">
+          <div class="fg" style="margin-bottom:0"><input id="nfRoom" type="text" placeholder="Room # (e.g. Room 201)"></div>
+          <div class="fg" style="margin-bottom:0"><input id="nfAddress" type="text" placeholder="Address or campus location"></div>
+        </div>
+        <input id="nfMapsUrl" type="url" placeholder="Google Maps URL (optional)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+      </div>
+    </div>
     <div class="fg"><label>Author</label><input id="nfAuthor" type="text" value="DrAL Lab"></div>
     <div class="factions">
       <button class="btn-cancel" onclick="closeModal('nFormModal')">Cancel</button>
@@ -1139,6 +1162,20 @@ const FIREBASE_CONFIG = {
     </div>
     </div>
     <div class="fg"><label>Description</label><textarea id="evDesc" style="min-height:70px"></textarea></div>
+    <div class="fg">
+      <label>Location <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="evBuilding" type="text" placeholder="Building or venue name (e.g. Langford Architecture Center, ZOOM)">
+        <div class="fr">
+          <div class="fg" style="margin-bottom:0"><input id="evRoom" type="text" placeholder="Room # (e.g. Room 201, Suite A)"></div>
+          <div class="fg" style="margin-bottom:0"><input id="evAddress" type="text" placeholder="Address or full location"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="evMapsUrl" type="url" placeholder="Google Maps URL (optional)" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;outline:none">
+          <button type="button" onclick="searchGoogleMaps()" style="background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:.8rem;cursor:pointer;white-space:nowrap">🔍 Search Maps</button>
+        </div>
+      </div>
+    </div>
     <div class="fg"><label>Link URL <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="evLink" type="url" placeholder="https://…"></div>
     <div class="fg"><label>Recurring</label>
       <select id="evRecur">
@@ -1427,16 +1464,24 @@ async function loadFromFirebase() {
 async function saveToFirebase() {
   if(!IS_CONFIGURED || !D) return;
   try {
-    // Firestore max doc size is 1MB. Strip oversized base64 blobs before saving.
     const safeD = stripLargeBase64(D);
+    const sizeBytes = estimateDataSize(safeD);
+    if(sizeBytes > 900000) {
+      // Warn but still try — Firestore limit is 1MB (1,048,576 bytes)
+      console.warn('Data size', sizeBytes, 'bytes — approaching Firestore 1MB limit');
+    }
     await DOC_REF.set(safeD);
     showSaved();
   } catch(e) {
     console.error('Save error:', e);
-    if(e.code === 'invalid-argument' || (e.message && e.message.includes('size'))) {
-      alert('Save failed: data is too large.\n\nPhotos stored as base64 quickly exceed Firestore\'s 1MB limit.\n\nTip: Use image URLs (from Google Drive, Imgur, etc.) instead of uploading files directly.');
+    if(e.code === 'invalid-argument' || (e.message&&(e.message.includes('size')||e.message.includes('too large')))) {
+      alert('⚠️ Save failed: the data is too large for the database (max 1MB).\n\n' +
+            'Photos uploaded as files are the main cause.\n\n' +
+            '✅ Fix: use image URLs instead.\n' +
+            'Upload your photo to Google Drive (share → copy link) or Imgur.com,\n' +
+            'then paste the URL in the photo field.');
     } else {
-      alert('Save failed. Please check your internet connection.\n\nError: ' + (e.message||e));
+      alert('Save failed. Please check your internet connection.\n\nError: ' + (e.message||String(e)));
     }
   }
 }
@@ -1446,23 +1491,38 @@ async function saveToFirebase() {
  * This prevents Firestore 1MB document limit errors.
  * Images that are already URLs (starting with http) are kept as-is.
  */
+const FIRESTORE_MAX_BASE64 = 400000; // ~300KB image — safe limit per base64 string
+
 function stripLargeBase64(obj, _depth=0) {
   if(_depth > 8) return obj;
   if(typeof obj === 'string') {
-    // Replace base64 data URLs — they are huge and shouldn't be in Firestore
-    if(obj.startsWith('data:image/')) {
-      // Keep only if small (< 50KB encoded = ~37KB image)
-      if(obj.length > 65000) return '__base64_too_large__';
+    if(obj.startsWith('data:image/') && obj.length > FIRESTORE_MAX_BASE64) {
+      return null; // will be filtered from arrays
     }
     return obj;
   }
-  if(Array.isArray(obj)) return obj.map(v => stripLargeBase64(v, _depth+1));
+  if(Array.isArray(obj)) {
+    // Filter out null entries (stripped large images) so arrays stay clean
+    return obj.map(v => stripLargeBase64(v, _depth+1)).filter(v => v !== null);
+  }
   if(obj && typeof obj === 'object') {
     const out = {};
-    for(const [k,v] of Object.entries(obj)) out[k] = stripLargeBase64(v, _depth+1);
+    for(const [k,v] of Object.entries(obj)) {
+      const stripped = stripLargeBase64(v, _depth+1);
+      // For non-array object values, replace null with empty string to avoid breaking fields
+      out[k] = (stripped === null) ? '' : stripped;
+    }
     return out;
   }
   return obj;
+}
+
+/**
+ * Estimate the data size in bytes.
+ * Used to warn before saving overly large data.
+ */
+function estimateDataSize(obj) {
+  return JSON.stringify(obj).length;
 }
 
 // Real-time listener: when data changes in Firebase, update all visitors
@@ -1674,7 +1734,7 @@ function rMembers(){
         <button class="ica ica-del"  onclick="confirmDelete('member',${m.id})">🗑</button>
       </div>
       ${m.photoUrl
-        ? `<img class="mc-photo" src="${m.photoUrl}" alt="${m.name}" style="cursor:zoom-in" onclick="event.stopPropagation();openLightbox(['${m.photoUrl}'],0)" onerror="this.parentNode.querySelector('.mc-av-fallback').style.display='flex';this.style.display='none'">`
+        ? `<img class="mc-photo" src="${m.photoUrl}" alt="${m.name}" style="cursor:zoom-in" onclick="event.stopPropagation();openLightbox(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify([m.photoUrl]))}')),0)" onerror="this.parentNode.querySelector('.mc-av-fallback').style.display='flex';this.style.display='none'">`
         : ''}
       <div class="mc-av mc-av-fallback" style="${m.photoUrl?'display:none':''}">
         ${ini(m.name)}
@@ -1730,7 +1790,7 @@ function openMemberView(id){
   const m=gm(id);
   const avEl=document.getElementById('mvAv');
   if(m.photoUrl){
-    avEl.innerHTML=`<img src="${m.photoUrl}" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:zoom-in" onclick="openLightbox(['${m.photoUrl}'],0)" onerror="this.parentNode.textContent='${ini(m.name)}'">`;
+    avEl.innerHTML=`<img src="${m.photoUrl}" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;cursor:zoom-in" onclick="openLightbox([this.src],0)" onerror="this.parentNode.textContent='${ini(m.name)}'">`;
   } else {
     avEl.textContent=ini(m.name);
   }
@@ -1789,10 +1849,9 @@ function openMemberForm(id=null){
 
 /**
  * Compress an image file to a smaller base64 JPEG.
- * maxW/maxH: max output dimensions. quality: 0–1 JPEG quality.
- * callback receives the compressed data URL string.
+ * Automatically reduces quality further if result exceeds targetMaxBytes.
  */
-function compressImage(file, maxW, maxH, quality, callback){
+function compressImage(file, maxW, maxH, quality, callback, targetMaxBytes=300000){
   const reader=new FileReader();
   reader.onload=e=>{
     const img=new Image();
@@ -1803,7 +1862,15 @@ function compressImage(file, maxW, maxH, quality, callback){
       const canvas=document.createElement('canvas');
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
-      callback(canvas.toDataURL('image/jpeg',quality));
+      // Try progressively lower quality until under targetMaxBytes
+      let q=quality;
+      let result=canvas.toDataURL('image/jpeg',q);
+      // Each base64 char ≈ 0.75 bytes
+      while(result.length*0.75>targetMaxBytes && q>0.3){
+        q=Math.round((q-0.12)*100)/100;
+        result=canvas.toDataURL('image/jpeg',q);
+      }
+      callback(result);
     };
     img.src=e.target.result;
   };
@@ -2195,7 +2262,7 @@ function rRec(){
       <div class="rc-top">
         <div style="flex:1">
           <div style="display:flex;gap:13px;align-items:flex-start">
-            ${r.photoUrl?`<img src="${r.photoUrl}" style="width:72px;height:60px;object-fit:cover;border-radius:7px;flex-shrink:0;border:1px solid var(--border);cursor:zoom-in" onclick="openLightbox(['${r.photoUrl}'],0)" alt="">`:''}
+            ${r.photoUrl?`<img src="${r.photoUrl}" style="width:72px;height:60px;object-fit:cover;border-radius:7px;flex-shrink:0;border:1px solid var(--border);cursor:zoom-in" onclick="openLightbox([this.src],0)" alt="">`:''}
             <div>
               <div class="rc-title">${r.title}</div>
               <div class="rc-proj">${proj?proj.title:''}</div>
@@ -2291,7 +2358,8 @@ function buildCarouselLightbox(photos, id, cls='', photosJson=null){
   const cid='car-'+id;
   const clickAttr = photosJson ? `onclick="openLightbox(${photosJson},this.dataset.idx||0)" data-idx="0"` : '';
   if(photos.length===1){
-    const click = photosJson ? `onclick="openLightbox(${photosJson},0)" style="cursor:zoom-in"` : '';
+    const safeEnc = photosJson ? encodeURIComponent(JSON.stringify([photos[0]])) : null;
+    const click = safeEnc ? `onclick="openLightbox(JSON.parse(decodeURIComponent('${safeEnc}')),0)" style="cursor:zoom-in"` : '';
     return `<img class="${cls?cls+' ':''}" src="${photos[0]}" ${click} style="display:block;width:100%;object-fit:cover;border-radius:9px;border:1px solid var(--border)" loading="lazy">`;
   }
   const slides=photos.map((p,i)=>{
@@ -2438,6 +2506,37 @@ async function removeHeroGalleryPhoto(idx){
   initHeroGallery(); renderHeroGalleryMgr();
 }
 
+/* ── News category dynamic color ── */
+const NEWS_CAT_PALETTE=[
+  {bg:'#dbeafe',text:'#1e40af'}, // blue (Publication)
+  {bg:'#fef3c7',text:'#92400e'}, // amber (Award)
+  {bg:'#dcfce7',text:'#166534'}, // green (Event)
+  {bg:'#ede9fe',text:'#5b21b6'}, // purple (Announcement)
+  {bg:'#f1f5f9',text:'#475569'}, // gray (Other)
+  {bg:'#ffe4e6',text:'#9f1239'}, // rose (Conference)
+  {bg:'#f0fdf4',text:'#15803d'}, // emerald (Workshop)
+  {bg:'#fffbeb',text:'#b45309'}, // yellow (Grant)
+  {bg:'#f0f9ff',text:'#0369a1'}, // sky (Media)
+  {bg:'#fdf2f8',text:'#9d174d'}, // pink
+  {bg:'#ecfdf5',text:'#065f46'}, // teal
+  {bg:'#fff7ed',text:'#c2410c'}, // orange
+];
+const _catColorMap={
+  'Publication':NEWS_CAT_PALETTE[0],'Award':NEWS_CAT_PALETTE[1],'Event':NEWS_CAT_PALETTE[2],
+  'Announcement':NEWS_CAT_PALETTE[3],'Other':NEWS_CAT_PALETTE[4],'Conference':NEWS_CAT_PALETTE[5],
+  'Workshop':NEWS_CAT_PALETTE[6],'Grant':NEWS_CAT_PALETTE[7],'Media':NEWS_CAT_PALETTE[8],
+};
+let _catColorNext=9; // next palette index for unknown categories
+function getNewsCatStyle(cat){
+  if(!_catColorMap[cat]){
+    // Assign a new color from the palette (cycle through)
+    _catColorMap[cat]=NEWS_CAT_PALETTE[_catColorNext%NEWS_CAT_PALETTE.length];
+    _catColorNext++;
+  }
+  const {bg,text}=_catColorMap[cat];
+  return `background:${bg};color:${text}`;
+}
+
 function rNews(){
   if(!D) return;
   const feed=document.getElementById('newsFeed');
@@ -2451,7 +2550,7 @@ function rNews(){
     <div class="news-card" id="nc-${n.id}">
       ${isAdmin?`<div style="position:absolute;top:16px;right:16px;display:flex;gap:5px"><button class="ica ica-edit" onclick="openNewsForm(${n.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('news',${n.id})">🗑</button></div>`:''}
       <div class="news-meta">
-        <span class="news-cat cat-${n.category.replace(' ','')}">${n.category}</span>
+        <span class="news-cat" style="${getNewsCatStyle(n.category)}">${n.category}</span>
         <span class="news-date">${fmt(n.date)}</span>
       </div>
       <div class="news-content-row" style="${!hasPhotos?'display:block':''}">
@@ -2461,6 +2560,7 @@ function rNews(){
           <div class="news-body collapsed" id="nb-${n.id}">${n.content}</div>
           <button class="news-read-more" onclick="toggleNewsExpand(${n.id})">Read more ▾</button>
           ${n.link?`<a class="news-ext-link" href="${n.link}" target="_blank">🔗 Read full article →</a>`:''}
+          ${(n.building||n.room||n.address)?`<div style="display:flex;align-items:flex-start;gap:6px;margin-top:10px;font-size:.79rem;color:var(--muted)"><span style="flex-shrink:0">📍</span><span>${[n.building,n.room].filter(Boolean).join(' · ')}${n.address?'<br><span style="font-size:.74rem">'+n.address+'</span>':''}${n.mapsUrl?'<br><a href="'+n.mapsUrl+'" target="_blank" style="color:#2563eb;font-size:.74rem">View on Google Maps →</a>':''}</span></div>`:''}
         </div>
       </div>
       <div class="news-author">— ${n.author}</div>
@@ -2549,6 +2649,10 @@ async function saveNews(){
     photoUrl:null,
     link:document.getElementById('nfLink').value.trim()||null,
     eventDate, eventTime,
+    building:document.getElementById('nfBuilding').value.trim()||null,
+    room:document.getElementById('nfRoom').value.trim()||null,
+    address:document.getElementById('nfAddress').value.trim()||null,
+    mapsUrl:document.getElementById('nfMapsUrl').value.trim()||null,
   };
   if(id){const i=D.news.findIndex(n=>n.id===id);D.news[i]=obj;}
   else{D.news.unshift(obj);}
@@ -2558,7 +2662,10 @@ async function saveNews(){
     const calId='news-ev-'+(id||obj.id);
     D.events=D.events.filter(e=>e.id!==calId);
     D.events.push({id:calId,title,date:eventDate,type:'event',time:eventTime||null,
-      desc:content.slice(0,200),link:obj.link||null,newsId:id||obj.id,autoGen:true});
+      desc:content.slice(0,200),link:obj.link||null,
+      building:obj.building||null,room:obj.room||null,
+      address:obj.address||null,mapsUrl:obj.mapsUrl||null,
+      newsId:id||obj.id,autoGen:true});
   }
   await saveToFirebase();
   btn.disabled=false; btn.textContent='Save News';
@@ -2792,15 +2899,17 @@ async function resetAccentColor(){
    CALENDAR
 ══════════════════════════════════════════════════ */
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let hiddenCalTypes=new Set(); // types toggled off by user
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 /* ── Event Types (dynamic) ── */
 const DEFAULT_EV_TYPES=[
   {id:'meeting', label:'Lab Meeting', color:'#16a34a', bg:'#dcfce7', text:'#166534'},
-  {id:'deadline',label:'Deadline',    color:'#991b1b', bg:'#fee2e2', text:'#991b1b'},
+  {id:'deadline',label:'Recruiting',  color:'#991b1b', bg:'#fee2e2', text:'#991b1b'},
   {id:'seminar', label:'Seminar',     color:'#92400e', bg:'#fef3c7', text:'#92400e'},
   {id:'event',   label:'Event',       color:'#1e40af', bg:'#dbeafe', text:'#1e40af'},
+  {id:'conference',label:'Conference', color:'#7c3aed', bg:'#ede9fe', text:'#5b21b6'},
 ];
 function getEvTypes(){ return (D&&D.calEventTypes&&D.calEventTypes.length)?D.calEventTypes:[...DEFAULT_EV_TYPES]; }
 function getEvType(id){ return getEvTypes().find(t=>t.id===id)||{id,label:id,color:'#555',bg:'#f1f5f9',text:'#475569'}; }
@@ -2812,7 +2921,21 @@ function evLabel(typeId){ return getEvType(typeId).label; }
 function renderCalLegend(){
   const leg=document.querySelector('.cal-legend'); if(!leg) return;
   leg.innerHTML=getEvTypes().map(t=>`
-    <div class="cal-leg-item"><div class="cal-leg-dot" style="background:${t.color}"></div>${t.label}</div>`).join('');
+    <div class="cal-leg-item${hiddenCalTypes.has(t.id)?' off':''}"
+         onclick="toggleCalType('${t.id}')"
+         title="${hiddenCalTypes.has(t.id)?'Click to show':'Click to hide'} ${t.label}">
+      <div class="cal-leg-dot" style="width:9px;height:9px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+      ${t.label}
+    </div>`).join('');
+  // Also add auto-generated Recruiting (deadline) toggle if not already in types
+  // (handled by getEvTypes including deadline)
+}
+
+function toggleCalType(typeId){
+  if(hiddenCalTypes.has(typeId)) hiddenCalTypes.delete(typeId);
+  else hiddenCalTypes.add(typeId);
+  renderCalLegend();
+  rCalendar();
 }
 
 /* ── Event Type Manager ── */
@@ -2908,7 +3031,7 @@ function rCalendar(){
   const firstDay=new Date(calYear,calMonth,1).getDay();
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
-  const evs=getCalEvents();
+  const evs=getCalEvents().filter(ev=>!hiddenCalTypes.has(ev.type));
 
   // Build date→events map, handling multi-day
   const evByDate={};
@@ -2953,11 +3076,13 @@ function rCalendar(){
   // Upcoming list
   const now=new Date(); now.setHours(0,0,0,0);
   const seen=new Set();
-  const upcoming=evs.filter(ev=>{
+  // For upcoming list, use unfiltered evs but still respect hidden types
+  const allEvs=getCalEvents();
+  const upcoming=allEvs.filter(ev=>{
     const key=ev.id;
     if(seen.has(key)) return false;
     seen.add(key);
-    return new Date(ev.date+'T00:00:00')>=now;
+    return new Date(ev.date+'T00:00:00')>=now && !hiddenCalTypes.has(ev.type);
   }).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
   const upEl=document.getElementById('calUpcoming'); if(!upEl) return;
   if(!upcoming.length){upEl.innerHTML='<div class="empty" style="padding:32px 0"><div class="empty-icon">📅</div><p>No upcoming events.</p></div>';return;}
@@ -2979,6 +3104,7 @@ function rCalendar(){
       <div style="flex:1">
         <div style="font-weight:500;font-size:.9rem">${ev.title}</div>
         <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${typeObj.label} · ${dateStr}${ev.time?' · '+ev.time:''}</div>
+        ${ev.building||ev.room?`<div style="font-size:.73rem;color:var(--muted);margin-top:2px">📍 ${[ev.building,ev.room].filter(Boolean).join(' · ')}</div>`:''}
         ${ev.recId?'<div style="font-size:.72rem;color:var(--green-l);margin-top:2px">→ View in Recruiting</div>':''}
       </div>
       ${isAdmin&&!ev.autoGen?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${ev.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();confirmDelete('event','${ev.id}')">🗑</button></div>`:''}
@@ -2997,6 +3123,28 @@ function gotoRecDeadline(recId){
   },300);
 }
 
+function buildLocationBlock(ev){
+  if(!ev.building && !ev.room && !ev.address && !ev.mapsUrl) return '';
+  const parts=[];
+  if(ev.building) parts.push(`<span style="font-weight:500">${ev.building}</span>`);
+  if(ev.room) parts.push(`Room ${ev.room}`);
+  const addr=ev.address?`<div style="font-size:.78rem;color:var(--muted);margin-top:1px">${ev.address}</div>`:'';
+  const mapBtn=ev.mapsUrl?`<a href="${ev.mapsUrl}" target="_blank" class="location-map-link">🗺 View on Google Maps</a>`:'';
+  return `<div class="location-row" style="margin-top:10px">
+    <span class="location-icon">📍</span>
+    <div class="location-text">
+      <div class="location-building">${parts.join(' · ')}</div>
+      ${addr}${mapBtn}
+    </div>
+  </div>`;
+}
+
+function searchGoogleMaps(){
+  const building=document.getElementById('evBuilding').value.trim();
+  const address=document.getElementById('evAddress').value.trim();
+  const q=encodeURIComponent([building,address,'Texas A&M'].filter(Boolean).join(', '));
+  window.open('https://www.google.com/maps/search/'+q,'_blank');
+}
 function openEventDetail(evEncoded){
   let ev;
   try{ ev=JSON.parse(decodeURIComponent(evEncoded)); }catch(e){ return; }
@@ -3009,11 +3157,13 @@ function openEventDetail(evEncoded){
   const dateStr=ev.endDate&&ev.endDate>ev.date
     ? `${new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric'})} – ${new Date(ev.endDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`
     : new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const locHtml = buildLocationBlock(ev);
   document.getElementById('confirmMsg').textContent=ev.title;
   document.getElementById('confirmSub').innerHTML=
     `<b>${dateStr}</b>${timeStr}<br>
      <span style="display:inline-block;margin-top:4px;padding:2px 10px;border-radius:10px;font-size:.78rem;background:${typeObj.bg};color:${typeObj.text}">${typeObj.label}</span>
-     ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left">'+ev.desc+'</p>':''}
+     ${locHtml}
+     ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left;color:var(--text)">'+ev.desc+'</p>':''}
      ${ev.link?'<br><a href="'+ev.link+'" target="_blank" style="color:#2563eb">🔗 More info</a>':''}`;
   document.getElementById('confirmOk').style.display='none';
   document.getElementById('confirmModal').classList.add('open');
@@ -3037,10 +3187,14 @@ function openEventForm(id=null){
       document.getElementById('evTimeEnd').value=ev.timeEnd||'';
       document.getElementById('evDesc').value=ev.desc||'';
       document.getElementById('evLink').value=ev.link||'';
+      document.getElementById('evBuilding').value=ev.building||'';
+      document.getElementById('evRoom').value=ev.room||'';
+      document.getElementById('evAddress').value=ev.address||'';
+      document.getElementById('evMapsUrl').value=ev.mapsUrl||'';
       document.getElementById('evRecur').value=ev.recur||'none';
     }
   } else {
-    ['evId','evTitle','evTime','evTimeEnd','evDesc','evLink','evEndDate'].forEach(f=>document.getElementById(f).value='');
+    ['evId','evTitle','evTime','evTimeEnd','evDesc','evLink','evEndDate','evBuilding','evRoom','evAddress','evMapsUrl'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('evDate').value=new Date().toISOString().slice(0,10);
     document.getElementById('evRecur').value='none';
     if(document.getElementById('evType').options.length) document.getElementById('evType').selectedIndex=0;
@@ -3064,6 +3218,10 @@ async function saveEvent(){
     timeEnd:document.getElementById('evTimeEnd').value||null,
     desc:document.getElementById('evDesc').value.trim()||null,
     link:document.getElementById('evLink').value.trim()||null,
+    building:document.getElementById('evBuilding').value.trim()||null,
+    room:document.getElementById('evRoom').value.trim()||null,
+    address:document.getElementById('evAddress').value.trim()||null,
+    mapsUrl:document.getElementById('evMapsUrl').value.trim()||null,
     recur};
   const toAdd=[base];
   if(recur!=='none'){
