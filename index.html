@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <style>
 /* ═══════════════════════════ TOKENS ═══════════════════════════ */
@@ -535,6 +536,32 @@ body.dark .fg input,.dark .fg select,.dark .fg textarea{background:var(--white);
   --gold: var(--theme-accent);
   --gold-pale: var(--theme-accent-pale);
 }
+
+/* Newsletter */
+.newsletter-box{background:var(--green);color:#fff;border-radius:14px;padding:32px 36px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.newsletter-box h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;margin-bottom:5px}
+.newsletter-box p{font-size:.88rem;opacity:.82}
+.newsletter-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.newsletter-input{padding:10px 16px;border-radius:8px;border:none;outline:none;font-family:inherit;font-size:.88rem;min-width:220px;flex:1;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.25)}
+.newsletter-input::placeholder{color:rgba(255,255,255,.55)}
+.newsletter-input:focus{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}
+.newsletter-btn{padding:10px 22px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .2s}
+.newsletter-btn:hover{background:#9a6f30}
+.newsletter-success{color:rgba(255,255,255,.9);font-size:.88rem;padding:10px;background:rgba(255,255,255,.15);border-radius:8px;margin-top:8px;display:none}
+
+/* Visitor counter */
+.visitor-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(255,255,255,.12);border-radius:20px;font-size:.73rem;color:rgba(255,255,255,.75);backdrop-filter:blur(4px)}
+#visitorCounter{position:absolute;bottom:12px;right:16px;z-index:3}
+
+/* Alumni section */
+.alumni-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:18px;display:flex;align-items:center;gap:14px;transition:box-shadow .2s}
+.alumni-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.alumni-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--green-pale),var(--gold-pale));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--green);flex-shrink:0;overflow:hidden}
+.alumni-av img{width:100%;height:100%;object-fit:cover}
+.alumni-name{font-weight:600;font-size:.93rem}
+.alumni-role{font-size:.77rem;color:var(--muted)}
+.alumni-now{font-size:.77rem;color:var(--green-l);margin-top:2px;font-weight:500}
+.alumni-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:20px}
 </style>
 </head>
 <body>
@@ -626,6 +653,7 @@ const FIREBASE_CONFIG = {
   </div>
   <!-- Background nav dots -->
   <div class="hero-bg-controls" id="heroDots"></div>
+  <div id="visitorCounter" class="visitor-badge" style="display:none">👁 <span id="visitorCount">0</span> visitors today</div>
 </div>
 
 <!-- ABOUT -->
@@ -655,6 +683,24 @@ const FIREBASE_CONFIG = {
     <div class="about-mission" id="aboutMission"></div>
   </div>
   <div class="about-cards" id="aboutCards"></div>
+  <!-- Newsletter signup -->
+  <div class="newsletter-box" id="newsletterBox">
+    <div>
+      <h3>Stay Updated</h3>
+      <p>Get notified about new publications, events, and lab announcements.</p>
+      <div class="newsletter-form">
+        <input id="newsletterEmail" class="newsletter-input" type="email" placeholder="your@email.com">
+        <button class="newsletter-btn" onclick="subscribeNewsletter()">Subscribe</button>
+      </div>
+      <div class="newsletter-success" id="newsletterSuccess">✓ You're subscribed! We'll be in touch.</div>
+    </div>
+    <div id="newsletterAdminStats" style="display:none;text-align:right">
+      <div style="font-size:2rem;font-weight:700;font-family:'Cormorant Garamond',serif" id="subCount">0</div>
+      <div style="font-size:.8rem;opacity:.8">Subscribers</div>
+      <button onclick="exportSubscribers()" style="margin-top:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:7px;font-size:.75rem;cursor:pointer">📥 Export CSV</button>
+    </div>
+  </div>
+
   <div class="about-contact">
     <div><h3>Get in Touch</h3><p>Interested in collaborating or joining the lab?</p></div>
     <div>
@@ -685,6 +731,16 @@ const FIREBASE_CONFIG = {
   </div>
   <div class="drag-hint" id="mDragHint">⠿ Drag member cards to reorder. Order is saved automatically.</div>
   <div class="mgrid" id="mGrid"></div>
+
+  <!-- Alumni Section (shown when Former tab is active) -->
+  <div id="alumniSection" style="display:none">
+    <div style="margin-top:40px;margin-bottom:20px">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--green);margin-bottom:6px">🎓 Alumni</h3>
+      <div class="sh-line"></div>
+      <p style="font-size:.85rem;color:var(--muted);margin-top:8px">Former lab members and their current affiliations.</p>
+    </div>
+    <div class="alumni-grid" id="alumniGrid"></div>
+  </div>
 </div>
 
 <!-- PROJECTS -->
@@ -1012,7 +1068,7 @@ const FIREBASE_CONFIG = {
     </div>
     <div class="fr">
       <div class="fg"><label>Advisor</label><input id="mfAdvisor" type="text" placeholder="Chanam Lee"></div>
-      <div class="fg"><label>Status</label><select id="mfStatus"><option>Active</option><option>Former</option></select></div>
+      <div class="fg"><label>Status</label><select id="mfStatus" onchange="document.getElementById('mfAlumniFields').style.display=this.value==='Former'?'block':'none'"><option>Active</option><option>Former</option></select></div>
     </div>
     <div class="fg"><label>Special Label <span style="font-weight:400;color:var(--muted)">(e.g. PI, Lab Manager — leave blank for none)</span></label>
       <input id="mfSubRole" type="text" placeholder="PI / Lab Manager / …">
@@ -1029,6 +1085,10 @@ const FIREBASE_CONFIG = {
     <div class="fg"><label>Google Scholar URL</label><input id="mfScholar" type="url" placeholder="https://scholar.google.com/..."></div>
     <div class="fg"><label>TAMU Profile URL</label><input id="mfTamu" type="url" placeholder="https://www.arch.tamu.edu/staff/..."></div>
     <div class="fg"><label>Personal Webpage URL</label><input id="mfWebpage" type="url" placeholder="https://…"></div>
+    <div class="fg" id="mfAlumniFields" style="display:none">
+      <label>Current Affiliation <span style="font-weight:400;color:var(--muted)">(for alumni — current position & institution)</span></label>
+      <input id="mfCurrentAffiliation" type="text" placeholder="Assistant Professor, University of Texas Austin">
+    </div>
     <div class="fg"><label>Bio</label><textarea id="mfBio" placeholder="Brief introduction..."></textarea></div>
     <div class="factions">
       <button class="btn-cancel" onclick="closeModal('mFormModal')">Cancel</button>
@@ -1549,13 +1609,14 @@ const ORCID_MAP = {
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 let db, DOC_REF;
 
-let storage, STORAGE_REF;
+let storage, STORAGE_REF, rtdb;
 if(IS_CONFIGURED) {
   firebase.initializeApp(FIREBASE_CONFIG);
   db = firebase.firestore();
   DOC_REF = db.collection('lab').doc('data');
   storage = firebase.storage();
   STORAGE_REF = storage.ref();
+  rtdb = firebase.database();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1797,6 +1858,7 @@ function checkPw(){
     document.getElementById('footerAdminBtn').style.display='block';
     document.getElementById('navMgrBtn').style.display='inline-flex';
     document.getElementById('themeBtn').style.display='inline-flex';
+    loadSubscriberCount();
     document.getElementById('heroNavToggle').style.display='inline-flex';
     renderAll();
   } else {
@@ -1976,6 +2038,27 @@ function rMembers(){
         ${m.scholar?`<br><a class="slink" href="${m.scholar}" target="_blank" onclick="event.stopPropagation()">🎓 Scholar</a>`:''}
       </div>
     </div>`}).join('');
+
+  // Alumni section (shown when Former tab active)
+  const alumniSec=document.getElementById('alumniSection');
+  const alumniGrid=document.getElementById('alumniGrid');
+  if(alumniSec&&alumniGrid){
+    if(isFormer){
+      alumniSec.style.display='block';
+      const withAffiliation=list.filter(m=>m.currentAffiliation);
+      alumniGrid.innerHTML=withAffiliation.length?withAffiliation.map(m=>`
+        <div class="alumni-card">
+          <div class="alumni-av">${m.photoUrl?`<img src="${m.photoUrl}" alt="${m.name}">`:`${ini(m.name)}`}</div>
+          <div>
+            <div class="alumni-name">${m.name}</div>
+            <div class="alumni-role">${m.role}${m.subRole?' · '+m.subRole:''}</div>
+            <div class="alumni-now">→ ${m.currentAffiliation}</div>
+          </div>
+        </div>`).join(''):'<p style="color:var(--muted);font-size:.85rem">Add current affiliations in member edit form.</p>';
+    } else {
+      alumniSec.style.display='none';
+    }
+  }
 }
 
 /* ── ROLE MANAGER ── */
@@ -2061,6 +2144,8 @@ function openMemberForm(id=null){
     document.getElementById('mfTamu').value=m.tamu||'';
     document.getElementById('mfWebpage').value=m.webpage||'';
     document.getElementById('mfBio').value=m.bio||'';
+    document.getElementById('mfCurrentAffiliation').value=m.currentAffiliation||'';
+    document.getElementById('mfAlumniFields').style.display=m.status==='Former'?'block':'none';
     document.getElementById('mfPhotoUrl').value=m.photoUrl||'';
     if(m.photoUrl){
       document.getElementById('mfPhotoPreview').style.display='block';
@@ -2178,6 +2263,7 @@ async function saveMember(){
     tamu:document.getElementById('mfTamu').value.trim()||null,
     webpage:document.getElementById('mfWebpage').value.trim()||null,
     bio:document.getElementById('mfBio').value.trim()||null,
+    currentAffiliation:document.getElementById('mfCurrentAffiliation').value.trim()||null,
     photoUrl:document.getElementById('mfPhotoUrl').value.trim()||null,
   };
   if(id){const i=D.members.findIndex(m=>m.id===id);D.members[i]=obj;}
@@ -4561,6 +4647,89 @@ async function toggleHeroSection(){
 }
 
 /* ══════════════════════════════════════════════════
+   VISITOR COUNTER (Firebase Realtime DB)
+══════════════════════════════════════════════════ */
+function initVisitorCounter(){
+  if(!IS_CONFIGURED||!rtdb) return;
+  const today=new Date().toISOString().slice(0,10);
+  const ref=rtdb.ref('visitors/'+today);
+  // Increment today's count
+  ref.transaction(cur=>(cur||0)+1);
+  // Listen for live count
+  ref.on('value',snap=>{
+    const count=snap.val()||0;
+    const el=document.getElementById('visitorCount');
+    const badge=document.getElementById('visitorCounter');
+    if(el){ el.textContent=count; }
+    if(badge){ badge.style.display=count>1?'flex':'none'; }
+    // Admin: show total
+    if(isAdmin){
+      rtdb.ref('visitors').once('value',allSnap=>{
+        let total=0;
+        allSnap.forEach(d=>{ total+=d.val()||0; });
+        document.getElementById('visitorCounter').innerHTML=
+          `👁 <strong>${count}</strong> today · <strong>${total}</strong> total`;
+        document.getElementById('visitorCounter').style.display='flex';
+      });
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════
+   EMAIL NEWSLETTER (Firebase Realtime DB)
+══════════════════════════════════════════════════ */
+async function subscribeNewsletter(){
+  const emailInput=document.getElementById('newsletterEmail');
+  const email=emailInput?.value?.trim()||'';
+  if(!email||!email.includes('@')){ alert('Please enter a valid email address.'); return; }
+  const btn=document.querySelector('.newsletter-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Subscribing…'; }
+  try{
+    if(IS_CONFIGURED&&rtdb){
+      // Store email as key (replace . with ,) to avoid Firebase path issue
+      const key=email.replace(/\./g,',');
+      await rtdb.ref('newsletter/'+key).set({
+        email, subscribedAt:new Date().toISOString(), active:true
+      });
+    }
+    emailInput.value='';
+    const success=document.getElementById('newsletterSuccess');
+    if(success){ success.style.display='block'; }
+    if(btn){ btn.textContent='Subscribed ✓'; }
+    setTimeout(()=>{ if(btn){ btn.disabled=false; btn.textContent='Subscribe'; } },3000);
+  }catch(e){
+    alert('Subscription failed. Please try again.'); console.error(e);
+    if(btn){ btn.disabled=false; btn.textContent='Subscribe'; }
+  }
+}
+
+function loadSubscriberCount(){
+  if(!isAdmin||!IS_CONFIGURED||!rtdb) return;
+  rtdb.ref('newsletter').on('value',snap=>{
+    const count=snap.numChildren();
+    const el=document.getElementById('subCount');
+    const stats=document.getElementById('newsletterAdminStats');
+    if(el) el.textContent=count;
+    if(stats) stats.style.display='block';
+  });
+}
+
+async function exportSubscribers(){
+  if(!IS_CONFIGURED||!rtdb) return;
+  const snap=await rtdb.ref('newsletter').once('value');
+  const rows=['Email,Subscribed At,Active'];
+  snap.forEach(child=>{
+    const d=child.val();
+    rows.push(`${d.email||''},${d.subscribedAt||''},${d.active?'yes':'no'}`);
+  });
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='dral-newsletter-subscribers.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ══════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════ */
 async function init(){
@@ -4600,6 +4769,8 @@ async function init(){
       }
     });
     startRealtimeListener(); // live updates for all visitors
+    initVisitorCounter();
+    loadSubscriberCount();
   } finally {
     loadScreen.classList.add('hide');
     setTimeout(()=>loadScreen.style.display='none',600);
