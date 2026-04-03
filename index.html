@@ -846,10 +846,11 @@ const FIREBASE_CONFIG = {
   </div>
   <div class="admin-bar" id="pubAdminBar">
     <span>🟢 Admin Mode</span>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <button class="add-btn" style="background:#0369a1" onclick="syncOrcidPublications()">🔄 Sync ORCID</button>
       <button class="add-btn" style="background:#7c3aed" onclick="syncOpenAlex()">🔬 Sync OpenAlex</button>
       <button class="add-btn" onclick="openPubForm()">+ Add Manually</button>
+      <button class="add-btn" style="background:#dc2626" onclick="openPubBulkDelete()">🗑 Bulk Delete</button>
     </div>
   </div>
 
@@ -989,6 +990,28 @@ const FIREBASE_CONFIG = {
       <button class="btn-cancel" onclick="resetPageTitles()">↺ Reset Defaults</button>
       <button class="btn-cancel" onclick="closeModal('pageTitleModal')">Cancel</button>
       <button class="btn-save" onclick="savePageTitles()">Save All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publication Bulk Delete -->
+<div class="overlay" id="pubBulkModal" onclick="if(event.target===this)closeModal('pubBulkModal')">
+  <div class="modal wide" style="max-width:640px">
+    <button class="modal-x" onclick="closeModal('pubBulkModal')">×</button>
+    <h3>Bulk Delete Publications</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="pubBulkSelectAll()" style="padding:5px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;cursor:pointer;background:var(--bg)">☑ Select All</button>
+        <button onclick="pubBulkSelectNone()" style="padding:5px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;cursor:pointer;background:var(--bg)">☐ Select None</button>
+        <button onclick="pubBulkSelectBySource('orcid')" style="padding:5px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;cursor:pointer;background:#e8f5e9;color:#2e7d32">ORCID only</button>
+        <button onclick="pubBulkSelectBySource('openalex')" style="padding:5px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:.8rem;cursor:pointer;background:#ede9fe;color:#5b21b6">OpenAlex only</button>
+      </div>
+      <span id="pubBulkCount" style="font-size:.82rem;color:var(--muted)">0 selected</span>
+    </div>
+    <div id="pubBulkList" style="max-height:52vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:10px;padding:10px"></div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('pubBulkModal')">Cancel</button>
+      <button id="pubBulkDelBtn" class="btn-save" style="background:#dc2626" onclick="confirmBulkDelete()" disabled>🗑 Delete Selected</button>
     </div>
   </div>
 </div>
@@ -4722,6 +4745,84 @@ async function resetPageTitles(){
   await saveToFirebase();
   applyPageTitles();
   closeModal('pageTitleModal');
+}
+
+/* ══════════════════════════════════════════════════
+   PUBLICATION BULK DELETE
+══════════════════════════════════════════════════ */
+let _bulkSelected = new Set();
+
+function openPubBulkDelete(){
+  _bulkSelected = new Set();
+  const pubs = (D.publications||[]).slice().sort((a,b)=>(b.year||0)-(a.year||0));
+  const list = document.getElementById('pubBulkList');
+  list.innerHTML = pubs.map(p=>`
+    <label style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s"
+           onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+      <input type="checkbox" data-id="${p.id}" onchange="pubBulkToggle('${p.id}',this.checked)"
+             style="margin-top:3px;width:15px;height:15px;cursor:pointer;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.86rem;font-weight:500;line-height:1.3">${p.title}</div>
+        <div style="font-size:.74rem;color:var(--muted);margin-top:2px">
+          ${p.year||'?'} · ${p.type||'journal'}
+          ${p.source?`<span style="padding:1px 7px;border-radius:6px;font-size:.68rem;background:${p.source==='orcid'?'#e8f5e9':'#ede9fe'};color:${p.source==='orcid'?'#2e7d32':'#5b21b6'}">${p.source}</span>`:''}
+        </div>
+        <div style="font-size:.74rem;color:var(--muted)">${(p.authors||'').slice(0,80)}${(p.authors||'').length>80?'…':''}</div>
+      </div>
+    </label>`).join('');
+  updateBulkCount();
+  openModal('pubBulkModal');
+}
+
+function pubBulkToggle(id, checked){
+  if(checked) _bulkSelected.add(id); else _bulkSelected.delete(id);
+  updateBulkCount();
+}
+
+function updateBulkCount(){
+  const n = _bulkSelected.size;
+  document.getElementById('pubBulkCount').textContent = n + ' selected';
+  document.getElementById('pubBulkDelBtn').disabled = n === 0;
+}
+
+function pubBulkSelectAll(){
+  document.querySelectorAll('#pubBulkList input[type=checkbox]').forEach(cb=>{
+    cb.checked = true; _bulkSelected.add(cb.dataset.id);
+  });
+  updateBulkCount();
+}
+
+function pubBulkSelectNone(){
+  document.querySelectorAll('#pubBulkList input[type=checkbox]').forEach(cb=>{
+    cb.checked = false;
+  });
+  _bulkSelected.clear();
+  updateBulkCount();
+}
+
+function pubBulkSelectBySource(source){
+  pubBulkSelectNone();
+  const pubs = D.publications||[];
+  document.querySelectorAll('#pubBulkList input[type=checkbox]').forEach((cb,i)=>{
+    const pub = pubs.slice().sort((a,b)=>(b.year||0)-(a.year||0))[i];
+    if(pub && pub.source === source){
+      cb.checked = true; _bulkSelected.add(cb.dataset.id);
+    }
+  });
+  updateBulkCount();
+}
+
+async function confirmBulkDelete(){
+  const n = _bulkSelected.size;
+  if(!n) return;
+  if(!confirm(`Delete ${n} publication${n>1?'s':''}? This cannot be undone.`)) return;
+  const btn = document.getElementById('pubBulkDelBtn');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  D.publications = (D.publications||[]).filter(p => !_bulkSelected.has(p.id));
+  await saveToFirebase();
+  _bulkSelected.clear();
+  closeModal('pubBulkModal');
+  rPublications();
 }
 
 /* ══════════════════════════════════════════════════
