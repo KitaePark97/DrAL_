@@ -573,7 +573,8 @@ const FIREBASE_CONFIG = {
   <div class="hero-bg" id="heroBg"></div>
   <div class="hero-overlay"></div>
   <!-- Admin bg selector button -->
-  <div class="hero-bg-admin">
+  <div class="hero-bg-admin" style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="hero-bg-btn" id="heroToggleBtn" onclick="toggleHeroSection()" title="Show/Hide hero banner">👁 Hide Hero</button>
     <button class="hero-bg-btn" onclick="openBgPicker()">🖼 Change Background</button>
   </div>
   <div class="hero-text">
@@ -827,12 +828,36 @@ const FIREBASE_CONFIG = {
 </div>
 
 <footer>
-  <strong>DrAL Lab</strong> · Design Research for Active Living · Texas A&M University<br>
-  <span style="margin-top:5px;display:block">Department of Landscape Architecture & Urban Planning · College of Architecture</span>
-  <a href="https://www.linkedin.com/in/design-research-for-active-living-dral-lab-918614268/" target="_blank" style="color:rgba(255,255,255,.5);margin-top:8px;display:inline-block;font-size:.78rem">in LinkedIn</a>
+  <div id="footerLine1" style="color:rgba(255,255,255,.9);font-weight:600"></div>
+  <div id="footerLine2" style="margin-top:5px;color:rgba(255,255,255,.6)"></div>
+  <a id="footerLinkedIn" href="#" target="_blank" style="color:rgba(255,255,255,.45);margin-top:8px;display:none;font-size:.78rem">in LinkedIn</a>
+  <div id="footerAdminBtn" style="display:none;margin-top:10px">
+    <button onclick="openFooterEdit()" style="background:rgba(255,255,255,.12);border:1px dashed rgba(255,255,255,.35);color:rgba(255,255,255,.7);padding:5px 14px;border-radius:8px;font-size:.72rem;cursor:pointer">✏️ Edit Footer</button>
+  </div>
 </footer>
 
 <!-- ═══ MODALS ═══ -->
+
+<!-- Footer Edit -->
+<div class="overlay" id="footerModal" onclick="if(event.target===this)closeModal('footerModal')">
+  <div class="modal" style="max-width:500px">
+    <button class="modal-x" onclick="closeModal('footerModal')">×</button>
+    <h3>Edit Footer</h3>
+    <div class="fg"><label>Line 1 — Lab name / main text</label>
+      <input id="ffLine1" type="text" placeholder="DrAL Lab · Design Research for Active Living · Texas A&M University">
+    </div>
+    <div class="fg"><label>Line 2 — Department / subtitle</label>
+      <input id="ffLine2" type="text" placeholder="Department of Landscape Architecture & Urban Planning · College of Architecture">
+    </div>
+    <div class="fg"><label>LinkedIn URL <span style="font-weight:400;color:var(--muted)">(leave blank to hide)</span></label>
+      <input id="ffLinkedIn" type="url" placeholder="https://www.linkedin.com/in/…">
+    </div>
+    <div class="factions">
+      <button class="btn-cancel" onclick="closeModal('footerModal')">Cancel</button>
+      <button class="btn-save" onclick="saveFooter()">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- Password -->
 <div class="overlay" id="pwModal" onclick="if(event.target===this)closeModal('pwModal')">
@@ -1620,6 +1645,7 @@ function adminToggle(){
     document.getElementById('adminLabel').textContent='Admin';
     document.querySelectorAll('.admin-bar').forEach(b=>b.classList.remove('show'));
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+    document.getElementById('footerAdminBtn').style.display='none';
     document.getElementById('navMgrBtn').style.display='none';
     renderAll();
   } else {
@@ -1641,6 +1667,7 @@ function checkPw(){
     document.getElementById('adminLabel').textContent='Admin ON';
     document.querySelectorAll('.admin-bar').forEach(b=>b.classList.add('show'));
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
+    document.getElementById('footerAdminBtn').style.display='block';
     document.getElementById('navMgrBtn').style.display='inline-flex';
     renderAll();
   } else {
@@ -2294,6 +2321,10 @@ function openRecTypeManager(){
   if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
   if(!D.hiddenTabs) D.hiddenTabs=['publications'];
   if(!D.aboutPhotos) D.aboutPhotos=[];
+  if(!D.footer) D.footer={line1:'DrAL Lab · Design Research for Active Living · Texas A&M University', line2:'Department of Landscape Architecture & Urban Planning · College of Architecture', linkedin:''};
+  if(D.heroVisible===undefined) D.heroVisible=true;
+  renderFooter();
+  applyHeroVisibility();
   applyHiddenTabs();
   initAboutGallery();
   renderRecTypeList();
@@ -2316,6 +2347,10 @@ async function addRecType(){
   if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
   if(!D.hiddenTabs) D.hiddenTabs=['publications'];
   if(!D.aboutPhotos) D.aboutPhotos=[];
+  if(!D.footer) D.footer={line1:'DrAL Lab · Design Research for Active Living · Texas A&M University', line2:'Department of Landscape Architecture & Urban Planning · College of Architecture', linkedin:''};
+  if(D.heroVisible===undefined) D.heroVisible=true;
+  renderFooter();
+  applyHeroVisibility();
   applyHiddenTabs();
   initAboutGallery();
   if(D.recTypes.includes(v)){alert('Type already exists.');return}
@@ -2898,6 +2933,10 @@ function renderAll(){
   if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
   if(!D.hiddenTabs) D.hiddenTabs=['publications'];
   if(!D.aboutPhotos) D.aboutPhotos=[];
+  if(!D.footer) D.footer={line1:'DrAL Lab · Design Research for Active Living · Texas A&M University', line2:'Department of Landscape Architecture & Urban Planning · College of Architecture', linkedin:''};
+  if(D.heroVisible===undefined) D.heroVisible=true;
+  renderFooter();
+  applyHeroVisibility();
   applyHiddenTabs();
   initAboutGallery();
   // Apply saved hero colors + photo
@@ -3127,6 +3166,10 @@ function openEvTypeManager(){
   if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
   if(!D.hiddenTabs) D.hiddenTabs=['publications'];
   if(!D.aboutPhotos) D.aboutPhotos=[];
+  if(!D.footer) D.footer={line1:'DrAL Lab · Design Research for Active Living · Texas A&M University', line2:'Department of Landscape Architecture & Urban Planning · College of Architecture', linkedin:''};
+  if(D.heroVisible===undefined) D.heroVisible=true;
+  renderFooter();
+  applyHeroVisibility();
   applyHiddenTabs();
   initAboutGallery();
   renderEvTypeList();
@@ -3154,6 +3197,10 @@ async function addEvType(){
   if(!D.newsCategories) D.newsCategories=['Publication','Award','Event','Announcement','Other'];
   if(!D.hiddenTabs) D.hiddenTabs=['publications'];
   if(!D.aboutPhotos) D.aboutPhotos=[];
+  if(!D.footer) D.footer={line1:'DrAL Lab · Design Research for Active Living · Texas A&M University', line2:'Department of Landscape Architecture & Urban Planning · College of Architecture', linkedin:''};
+  if(D.heroVisible===undefined) D.heroVisible=true;
+  renderFooter();
+  applyHeroVisibility();
   applyHiddenTabs();
   initAboutGallery();
   if(D.calEventTypes.find(t=>t.id===id)){alert('Type ID already exists.');return}
@@ -4006,6 +4053,62 @@ async function resetProjectOrder(){
   D.projects.forEach(p => delete p.order);
   await saveToFirebase();
   rProjects();
+}
+
+/* ══════════════════════════════════════════════════
+   FOOTER + HERO VISIBILITY
+══════════════════════════════════════════════════ */
+function renderFooter(){
+  if(!D||!D.footer) return;
+  const f=D.footer;
+  const l1=document.getElementById('footerLine1');
+  const l2=document.getElementById('footerLine2');
+  const li=document.getElementById('footerLinkedIn');
+  if(l1) l1.textContent=f.line1||'';
+  if(l2) l2.textContent=f.line2||'';
+  if(li){
+    if(f.linkedin){
+      li.href=f.linkedin;
+      li.style.display='inline-block';
+    } else {
+      li.style.display='none';
+    }
+  }
+}
+
+function openFooterEdit(){
+  const f=D.footer||{};
+  document.getElementById('ffLine1').value=f.line1||'';
+  document.getElementById('ffLine2').value=f.line2||'';
+  document.getElementById('ffLinkedIn').value=f.linkedin||'';
+  openModal('footerModal');
+}
+
+async function saveFooter(){
+  D.footer={
+    line1: document.getElementById('ffLine1').value.trim(),
+    line2: document.getElementById('ffLine2').value.trim(),
+    linkedin: document.getElementById('ffLinkedIn').value.trim()||null,
+  };
+  await saveToFirebase();
+  renderFooter();
+  closeModal('footerModal');
+}
+
+/* Hero section show/hide */
+function applyHeroVisibility(){
+  const hero=document.getElementById('heroSection');
+  const btn=document.getElementById('heroToggleBtn');
+  if(!hero) return;
+  const visible = D.heroVisible !== false; // default true
+  hero.style.display = visible ? '' : 'none';
+  if(btn) btn.textContent = visible ? '👁 Hide Hero' : '👁 Show Hero';
+}
+
+async function toggleHeroSection(){
+  D.heroVisible = D.heroVisible === false ? true : false;
+  applyHeroVisibility();
+  await saveToFirebase();
 }
 
 /* ══════════════════════════════════════════════════
