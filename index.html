@@ -5675,17 +5675,21 @@ function generateNewsletter(){
   const siteUrl = window.location.origin + window.location.pathname;
 
   // Collect this month's data
+  // Next month's date range for events
+  const nextMonthNum  = (month + 1) % 12;
+  const nextMonthYear = month === 11 ? year + 1 : year;
+  const nextMonthStart = `${nextMonthYear}-${String(nextMonthNum+1).padStart(2,'0')}-01`;
+  const nextMonthEnd   = `${nextMonthYear}-${String(nextMonthNum+1).padStart(2,'0')}-31`;
+  const nextMonthLabel = `${NL_MONTHS[nextMonthNum]} ${nextMonthYear}`;
+
   const monthNews = (D.news||[]).filter(n => n.date >= startDate && n.date <= endDate)
     .sort((a,b) => new Date(b.date) - new Date(a.date));
   const monthPubs = (D.publications||[]).filter(p => String(p.year) === String(year))
     .slice(0, 5);
-  const upcomingEvents = (D.events||[]).filter(e => e.date > endDate)
-    .sort((a,b) => a.date.localeCompare(b.date)).slice(0, 5);
+  // Only next month's events
+  const upcomingEvents = (D.events||[]).filter(e => e.date >= nextMonthStart && e.date <= nextMonthEnd)
+    .sort((a,b) => a.date.localeCompare(b.date));
   const openPositions = (D.recruiting||[]).filter(r => r.status === 'Open');
-  const newMembers = (D.members||[]).filter(m => {
-    // rough heuristic: members added recently (no joined date, use order/id range)
-    return m.status === 'Active';
-  }).slice(0, 3);
 
   // ── Build HTML email ──────────────────────────────────────────────────────
   const green = '#2d4a3e'; const gold = '#b8873f'; const bg = '#f5f2ec';
@@ -5717,11 +5721,14 @@ function generateNewsletter(){
   if(monthNews.length){
     html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📰 Lab News</h2>`;
     html += monthNews.map(n => `
-  <div style="background:#fff;border-radius:10px;padding:18px 22px;margin-bottom:14px;border-left:4px solid ${gold}">
-    <div style="font-weight:700;font-size:1rem;margin-bottom:5px">${n.title}</div>
-    <div style="font-size:.8rem;color:#888;margin-bottom:8px">${n.category} · ${n.date}</div>
-    <div style="font-size:.88rem;color:#555;line-height:1.6">${(n.content||'').slice(0,200)}${(n.content||'').length>200?'…':''}</div>
-  </div>`).join('');
+  <a href="${siteUrl}?page=news" style="text-decoration:none;display:block">
+    <div style="background:#fff;border-radius:10px;padding:18px 22px;margin-bottom:14px;border-left:4px solid ${gold};transition:box-shadow .2s;cursor:pointer">
+      <div style="font-weight:700;font-size:1rem;margin-bottom:5px;color:#222">${n.title}</div>
+      <div style="font-size:.8rem;color:#888;margin-bottom:8px">${n.category} · ${n.date}</div>
+      <div style="font-size:.88rem;color:#555;line-height:1.6">${(n.content||'').slice(0,200)}${(n.content||'').length>200?'…':''}</div>
+      <div style="margin-top:8px;font-size:.76rem;color:${green};font-weight:500">Read more →</div>
+    </div>
+  </a>`).join('');
     html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
   }
 
@@ -5729,28 +5736,34 @@ function generateNewsletter(){
   if(monthPubs.length){
     html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📄 Recent Publications</h2>`;
     html += monthPubs.map(p => `
-  <div style="background:#fff;border-radius:10px;padding:14px 20px;margin-bottom:10px">
-    <div style="font-weight:600;font-size:.92rem;margin-bottom:4px">${p.title}</div>
-    <div style="font-size:.78rem;color:#888">${(p.authors||'').replace(/<[^>]*>/g,'').slice(0,100)} · ${p.year||''}</div>
-    ${p.doi?`<a href="${p.doi}" style="font-size:.76rem;color:${green}">🔗 View Paper</a>`:''}
-  </div>`).join('');
+  <a href="${p.doi||siteUrl+'?page=publications'}" target="_blank" style="text-decoration:none;display:block">
+    <div style="background:#fff;border-radius:10px;padding:14px 20px;margin-bottom:10px;cursor:pointer">
+      <div style="font-weight:600;font-size:.92rem;margin-bottom:4px;color:#222">${p.title}</div>
+      <div style="font-size:.78rem;color:#888;margin-bottom:6px">${(p.authors||'').replace(/<[^>]*>/g,'').slice(0,100)} · ${p.year||''}</div>
+      <div style="font-size:.76rem;color:${green};font-weight:500">${p.doi ? '🔗 View Paper →' : '→ All Publications'}</div>
+    </div>
+  </a>`).join('');
     html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
   }
 
-  // ── Upcoming Events ───────────────────────────────────────────────────────
+  // ── Upcoming Events (next month only) ────────────────────────────────────
   if(upcomingEvents.length){
-    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📅 Upcoming Events</h2>`;
+    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:4px">📅 Events in ${nextMonthLabel}</h2>`;
+    html += `<p style="font-size:.8rem;color:#888;margin-top:0;margin-bottom:12px">Upcoming events at DrAL Lab</p>`;
     html += upcomingEvents.map(e => `
-  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px">
-    <div style="min-width:52px;background:${green};color:#fff;border-radius:8px;padding:8px;text-align:center">
-      <div style="font-size:.65rem;text-transform:uppercase;opacity:.8">${NL_MONTHS[parseInt(e.date.slice(5,7))-1].slice(0,3)}</div>
-      <div style="font-size:1.4rem;font-weight:700;line-height:1">${parseInt(e.date.slice(8,10))}</div>
+  <a href="${siteUrl}?page=calendar" style="text-decoration:none;display:block">
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;background:#fff;border-radius:10px;padding:12px 16px;cursor:pointer">
+      <div style="min-width:52px;background:${green};color:#fff;border-radius:8px;padding:8px;text-align:center;flex-shrink:0">
+        <div style="font-size:.65rem;text-transform:uppercase;opacity:.8">${NL_MONTHS[parseInt(e.date.slice(5,7))-1].slice(0,3)}</div>
+        <div style="font-size:1.4rem;font-weight:700;line-height:1">${parseInt(e.date.slice(8,10))}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.9rem;color:#222">${e.title}</div>
+        <div style="font-size:.78rem;color:#888;margin-top:2px">${e.type||''}${e.time?' · '+e.time:''}${e.building?' · '+e.building:''}</div>
+        ${e.desc?`<div style="font-size:.78rem;color:#666;margin-top:4px">${e.desc.slice(0,100)}${e.desc.length>100?'…':''}</div>`:''}
+      </div>
     </div>
-    <div>
-      <div style="font-weight:600;font-size:.9rem">${e.title}</div>
-      <div style="font-size:.78rem;color:#888">${e.type||''}${e.time?' · '+e.time:''}${e.building?' · '+e.building:''}</div>
-    </div>
-  </div>`).join('');
+  </a>`).join('');
     html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
   }
 
@@ -5758,13 +5771,15 @@ function generateNewsletter(){
   if(openPositions.length){
     html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">🔍 Open Positions</h2>`;
     html += openPositions.map(r => `
-  <div style="background:#fff;border-radius:10px;padding:12px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-    <div>
-      <div style="font-weight:600;font-size:.88rem">${r.title}</div>
-      <div style="font-size:.75rem;color:#888">${r.type||''}${r.deadline?' · Deadline: '+r.deadline:''}</div>
+  <a href="${r.link||siteUrl+'?page=recruiting'}" target="_blank" style="text-decoration:none;display:block">
+    <div style="background:#fff;border-radius:10px;padding:12px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+      <div>
+        <div style="font-weight:600;font-size:.88rem;color:#222">${r.title}</div>
+        <div style="font-size:.75rem;color:#888">${r.type||''}${r.deadline?' · Deadline: '+r.deadline:''}</div>
+      </div>
+      <div style="background:${gold};color:#fff;padding:5px 12px;border-radius:6px;font-size:.76rem;white-space:nowrap;flex-shrink:0">Apply →</div>
     </div>
-    <a href="${siteUrl}?page=recruiting" style="background:${gold};color:#fff;padding:5px 12px;border-radius:6px;font-size:.76rem;text-decoration:none">Apply</a>
-  </div>`).join('');
+  </a>`).join('');
     html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
   }
 
@@ -5782,7 +5797,7 @@ function generateNewsletter(){
 
   document.getElementById('nlBody').value = html;
   nlSetTab('preview');
-  status.textContent = `✓ Generated — ${monthNews.length} news, ${monthPubs.length} publications, ${upcomingEvents.length} events`;
+  status.textContent = `✓ Generated — ${monthNews.length} news, ${monthPubs.length} publications, ${upcomingEvents.length} events in ${nextMonthLabel}, ${openPositions.length} positions`;
 }
 
 /* ── Send ──────────────────────────────────────────────────────────────────── */
