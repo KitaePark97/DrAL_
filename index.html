@@ -5554,9 +5554,9 @@ function showToast(msg){
    Setup: emailjs.com → free account → add Gmail service
    → create template → paste IDs below
 ══════════════════════════════════════════════════ */
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ← from EmailJS dashboard
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← subscription confirm template
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ← from Account → API Keys
+const EMAILJS_SERVICE_ID  = 'service_8zu5r2d';   // ← from EmailJS dashboard
+const EMAILJS_TEMPLATE_ID = 'template_hasufo5';  // ← subscription confirm template
+const EMAILJS_PUBLIC_KEY  = 'E5JAgM2sPMBm3nWMZ';   // ← from Account → API Keys
 // Newsletter template (can be same as above or a dedicated one):
 // const EMAILJS_NL_TEMPLATE_ID is declared below — it uses EMAILJS_TEMPLATE_ID as fallback
 
@@ -5609,7 +5609,7 @@ async function subscribeNewsletter(){
 
 // A separate EmailJS template for newsletters (can reuse EMAILJS_TEMPLATE_ID
 // but you can also create a dedicated "newsletter" template)
-const EMAILJS_NL_TEMPLATE_ID = 'YOUR_NL_TEMPLATE_ID'; // template with {{subject}} {{body}} {{to_email}}
+const EMAILJS_NL_TEMPLATE_ID = 'template_hasufo5'; // same template for newsletter // template with {{subject}} {{body}} {{to_email}}
 
 const NL_MONTHS = ['January','February','March','April','May','June',
                    'July','August','September','October','November','December'];
