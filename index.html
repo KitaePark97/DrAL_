@@ -1905,6 +1905,7 @@ function goto(name, btn) {
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+name).classList.add('on');
   if(btn) btn.classList.add('on');
+  applyPageTitles();
   if(name==='about')    renderAbout();
   if(name==='members')  rMembers();
   if(name==='projects') rProjects();
@@ -2717,6 +2718,8 @@ async function addRecType(){
   renderFooter();
   applyHeroVisibility();
   applyHiddenTabs();
+  initTheme();
+  applyPageTitles();
   initAboutGallery();
   if(D.recTypes.includes(v)){alert('Type already exists.');return}
   D.recTypes.push(v);
