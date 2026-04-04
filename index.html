@@ -1652,7 +1652,7 @@ const FIREBASE_CONFIG = {
 </div>
 
 <!-- ═══ DATA + FIREBASE ═══ -->
-<script src="data.js" defer></script>
+<script src="data.js"></script>
 <script>
 /* ══════════════════════════════════════════════════
    ▼▼▼  Paste your Firebase config here  ▼▼▼
@@ -1890,7 +1890,7 @@ function startRealtimeListener() {
         }
         // Debounce: avoid re-rendering more than once per 400ms
         clearTimeout(_renderDebounce);
-        _renderDebounce = setTimeout(renderAll, 400);
+        _renderDebounce = setTimeout(renderAll, 600);
       }
     },
     err => { console.error('Realtime listener error:', err); }
@@ -1906,6 +1906,7 @@ function goto(name, btn) {
   document.getElementById('page-'+name).classList.add('on');
   if(btn) btn.classList.add('on');
   if(name==='about')    renderAbout();
+  if(name==='members')  rMembers();
   if(name==='projects') rProjects();
   if(name==='recruiting'){ initRecTypeFilters(); rRec(); }
   if(name==='news')     rNews();
@@ -3315,9 +3316,7 @@ function renderAll(){
   applyHeroTextColor(s.textColor||'#ffffff');
   applyHeroAccentColor(s.accentColor||'#a5d4c4');
   initHeroGallery();
-  renderStats();
-  // Only re-render members if currently on members page (expensive DOM operation)
-  if(document.querySelector('.page.on')?.id === 'page-members') rMembers();
+  renderStats(); rMembers();
   const active=document.querySelector('.page.on')?.id?.replace('page-','');
   if(active==='projects'){ initTagFilters(); rProjects(); }
   if(active==='recruiting'){ initRecTypeFilters(); rRec(); }
@@ -4747,7 +4746,8 @@ const PAGE_TITLE_DEFAULTS={
 };
 
 function applyPageTitles(){
-  const pt=D&&D.pageTitles||{};
+  if(!D) return;
+  const pt=D.pageTitles||{};
   Object.entries(PAGE_TITLE_DEFAULTS).forEach(([page,def])=>{
     const h=document.getElementById('ph-'+page);
     const p=document.getElementById('ps-'+page);
@@ -5559,8 +5559,8 @@ async function init(){
     initHeroBg();
     initRecTypeFilters();
     rCalendar();
-    rPublications();
-    rResources();
+    // Publications/Resources: load on-demand only
+    // rPublications(); rResources();
     // Re-position carousels on window resize to maintain correct pixel offset
     window.addEventListener('resize', ()=>{
       document.querySelectorAll('.carousel[data-idx]').forEach(el=>{
