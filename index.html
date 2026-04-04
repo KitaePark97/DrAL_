@@ -713,10 +713,15 @@ const FIREBASE_CONFIG = {
       </div>
       <div class="newsletter-success" id="newsletterSuccess">✓ You're subscribed! We'll be in touch.</div>
     </div>
-    <div id="newsletterAdminStats" class="admin-only" style="display:none;text-align:right">
-      <div style="font-size:2rem;font-weight:700;font-family:'Cormorant Garamond',serif" id="subCount">0</div>
-      <div style="font-size:.8rem;opacity:.8">Subscribers</div>
-      <button onclick="exportSubscribers()" style="margin-top:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 13px;border-radius:7px;font-size:.75rem;cursor:pointer">📥 Export CSV</button>
+    <div id="newsletterAdminStats" class="admin-only" style="display:none;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:7px">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div style="font-size:2rem;font-weight:700;font-family:'Cormorant Garamond',serif" id="subCount">0</div>
+        <div style="font-size:.8rem;opacity:.8">Subscribers</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">
+        <button onclick="openNewsletterComposer()" style="background:var(--gold);color:#fff;border:none;padding:6px 14px;border-radius:7px;font-size:.78rem;cursor:pointer;font-weight:500">✉ Generate &amp; Send</button>
+        <button onclick="exportSubscribers()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:.75rem;cursor:pointer">📥 Export CSV</button>
+      </div>
     </div>
   </div>
 
@@ -1033,6 +1038,47 @@ const FIREBASE_CONFIG = {
     <div class="factions">
       <button class="btn-cancel" onclick="closeModal('pubBulkModal')">Cancel</button>
       <button id="pubBulkDelBtn" class="btn-save" style="background:#dc2626" onclick="confirmBulkDelete()" disabled>🗑 Delete Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- Newsletter Composer -->
+<div class="overlay" id="newsletterComposerModal" onclick="if(event.target===this)closeModal('newsletterComposerModal')">
+  <div class="modal wide" style="max-width:800px;max-height:92vh;display:flex;flex-direction:column">
+    <button class="modal-x" onclick="closeModal('newsletterComposerModal')">×</button>
+    <h3>✉ Monthly Newsletter</h3>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:.82rem;font-weight:500">Period:</label>
+        <select id="nlMonth" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.84rem;outline:none"></select>
+        <select id="nlYear" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.84rem;outline:none"></select>
+      </div>
+      <button onclick="generateNewsletter()" style="background:var(--green);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:.82rem;cursor:pointer;font-weight:500">⚡ Auto-Generate</button>
+      <span id="nlGenStatus" style="font-size:.78rem;color:var(--muted)"></span>
+    </div>
+    <!-- Subject -->
+    <div class="fg" style="margin-bottom:10px">
+      <label>Email Subject</label>
+      <input id="nlSubject" type="text" placeholder="DrAL Lab Monthly Update — April 2026">
+    </div>
+    <!-- Preview tabs -->
+    <div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px;flex-shrink:0">
+      <button id="nlTabEdit" onclick="nlSetTab('edit')" style="flex:1;padding:7px;border:none;background:var(--green);color:#fff;font-size:.82rem;font-family:inherit;cursor:pointer">✏️ Edit</button>
+      <button id="nlTabPreview" onclick="nlSetTab('preview')" style="flex:1;padding:7px;border:none;background:var(--white);color:var(--text);font-size:.82rem;font-family:inherit;cursor:pointer">👁 Preview</button>
+    </div>
+    <textarea id="nlBody" style="flex:1;min-height:320px;padding:14px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.84rem;outline:none;resize:vertical;line-height:1.7" placeholder="Newsletter body (HTML supported)…"></textarea>
+    <div id="nlPreviewFrame" style="display:none;flex:1;min-height:320px;border:1.5px solid var(--border);border-radius:8px;overflow:auto;background:#fff"></div>
+    <!-- Send section -->
+    <div style="padding-top:14px;border-top:1px solid var(--border);margin-top:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div id="nlSendInfo" style="font-size:.82rem;color:var(--muted);flex:1"></div>
+      <button onclick="sendTestEmail()" style="background:none;border:1.5px solid var(--border);padding:8px 16px;border-radius:8px;font-size:.82rem;cursor:pointer">📧 Send Test</button>
+      <button onclick="sendNewsletterToAll()" id="nlSendBtn" style="background:var(--gold);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:.85rem;cursor:pointer;font-weight:500">🚀 Send to All Subscribers</button>
+    </div>
+    <div id="nlSendProgress" style="display:none;margin-top:10px">
+      <div style="background:var(--bg);border-radius:8px;height:8px;overflow:hidden">
+        <div id="nlProgressBar" style="height:100%;background:var(--green);width:0%;transition:width .3s"></div>
+      </div>
+      <div id="nlProgressText" style="font-size:.78rem;color:var(--muted);margin-top:5px;text-align:center"></div>
     </div>
   </div>
 </div>
@@ -5509,8 +5555,10 @@ function showToast(msg){
    → create template → paste IDs below
 ══════════════════════════════════════════════════ */
 const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // ← from EmailJS dashboard
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← your email template
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // ← subscription confirm template
 const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // ← from Account → API Keys
+// Newsletter template (can be same as above or a dedicated one):
+// const EMAILJS_NL_TEMPLATE_ID is declared below — it uses EMAILJS_TEMPLATE_ID as fallback
 
 let _emailjsReady = false;
 function initEmailJS(){
@@ -5552,6 +5600,280 @@ async function subscribeNewsletter(){
     alert('Subscription failed. Please try again.'); console.error(e);
     if(btn){ btn.disabled=false; btn.textContent='Subscribe'; }
   }
+}
+
+
+/* ══════════════════════════════════════════════════
+   MONTHLY NEWSLETTER COMPOSER + SENDER
+══════════════════════════════════════════════════ */
+
+// A separate EmailJS template for newsletters (can reuse EMAILJS_TEMPLATE_ID
+// but you can also create a dedicated "newsletter" template)
+const EMAILJS_NL_TEMPLATE_ID = 'YOUR_NL_TEMPLATE_ID'; // template with {{subject}} {{body}} {{to_email}}
+
+const NL_MONTHS = ['January','February','March','April','May','June',
+                   'July','August','September','October','November','December'];
+
+function openNewsletterComposer(){
+  // Populate month/year selectors
+  const now = new Date();
+  const monthSel = document.getElementById('nlMonth');
+  const yearSel  = document.getElementById('nlYear');
+  monthSel.innerHTML = NL_MONTHS.map((m,i)=>
+    `<option value="${i}"${i===now.getMonth()?' selected':''}>${m}</option>`).join('');
+  const curY = now.getFullYear();
+  yearSel.innerHTML = [curY-1, curY, curY+1].map(y=>
+    `<option value="${y}"${y===curY?' selected':''}>${y}</option>`).join('');
+
+  document.getElementById('nlSubject').value =
+    `DrAL Lab Monthly Update — ${NL_MONTHS[now.getMonth()]} ${curY}`;
+  document.getElementById('nlBody').value = '';
+  document.getElementById('nlPreviewFrame').innerHTML = '';
+  document.getElementById('nlGenStatus').textContent = '';
+  document.getElementById('nlSendProgress').style.display = 'none';
+  nlSetTab('edit');
+  _updateNlSendInfo();
+  openModal('newsletterComposerModal');
+}
+
+function nlSetTab(tab){
+  const editEl   = document.getElementById('nlBody');
+  const prevEl   = document.getElementById('nlPreviewFrame');
+  const tabEdit  = document.getElementById('nlTabEdit');
+  const tabPrev  = document.getElementById('nlTabPreview');
+  if(tab === 'preview'){
+    prevEl.innerHTML = editEl.value;
+    prevEl.style.display = 'block'; editEl.style.display = 'none';
+    tabPrev.style.background = 'var(--green)'; tabPrev.style.color = '#fff';
+    tabEdit.style.background = 'var(--white)'; tabEdit.style.color = 'var(--text)';
+  } else {
+    prevEl.style.display = 'none'; editEl.style.display = 'block';
+    tabEdit.style.background = 'var(--green)'; tabEdit.style.color = '#fff';
+    tabPrev.style.background = 'var(--white)'; tabPrev.style.color = 'var(--text)';
+  }
+}
+
+async function _updateNlSendInfo(){
+  if(!IS_CONFIGURED||!rtdb) return;
+  const snap = await rtdb.ref('newsletter').once('value');
+  const count = snap.numChildren();
+  document.getElementById('nlSendInfo').textContent =
+    `${count} subscriber${count!==1?'s':''} will receive this email.`;
+}
+
+function generateNewsletter(){
+  const month = parseInt(document.getElementById('nlMonth').value);
+  const year  = parseInt(document.getElementById('nlYear').value);
+  const status = document.getElementById('nlGenStatus');
+  status.textContent = 'Generating…';
+
+  // Date range for the selected month
+  const startDate = `${year}-${String(month+1).padStart(2,'0')}-01`;
+  const endDate   = `${year}-${String(month+1).padStart(2,'0')}-31`;
+  const monthLabel = `${NL_MONTHS[month]} ${year}`;
+  const labName = D?.footer?.line1 || 'DrAL Lab';
+  const siteUrl = window.location.origin + window.location.pathname;
+
+  // Collect this month's data
+  const monthNews = (D.news||[]).filter(n => n.date >= startDate && n.date <= endDate)
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+  const monthPubs = (D.publications||[]).filter(p => String(p.year) === String(year))
+    .slice(0, 5);
+  const upcomingEvents = (D.events||[]).filter(e => e.date > endDate)
+    .sort((a,b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const openPositions = (D.recruiting||[]).filter(r => r.status === 'Open');
+  const newMembers = (D.members||[]).filter(m => {
+    // rough heuristic: members added recently (no joined date, use order/id range)
+    return m.status === 'Active';
+  }).slice(0, 3);
+
+  // ── Build HTML email ──────────────────────────────────────────────────────
+  const green = '#2d4a3e'; const gold = '#b8873f'; const bg = '#f5f2ec';
+
+  let html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${bg};font-family:Georgia,'Times New Roman',serif;color:#222">
+
+<!-- Header -->
+<div style="background:${green};padding:32px 40px;text-align:center">
+  <div style="font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#fff;letter-spacing:.02em">
+    Dr<span style="color:#a5d4c4">AL</span> Lab
+  </div>
+  <div style="color:rgba(255,255,255,.75);font-size:.9rem;margin-top:6px">Monthly Update — ${monthLabel}</div>
+</div>
+
+<!-- Intro -->
+<div style="max-width:640px;margin:32px auto;padding:0 24px">
+  <p style="font-size:1rem;line-height:1.7;color:#444">
+    Here's what's been happening at <strong>${labName}</strong> this month.
+    Visit our <a href="${siteUrl}" style="color:${green}">website</a> for the full picture.
+  </p>
+  <hr style="border:none;border-top:2px solid ${gold};width:40px;margin:24px 0">
+`;
+
+  // ── News ──────────────────────────────────────────────────────────────────
+  if(monthNews.length){
+    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📰 Lab News</h2>`;
+    html += monthNews.map(n => `
+  <div style="background:#fff;border-radius:10px;padding:18px 22px;margin-bottom:14px;border-left:4px solid ${gold}">
+    <div style="font-weight:700;font-size:1rem;margin-bottom:5px">${n.title}</div>
+    <div style="font-size:.8rem;color:#888;margin-bottom:8px">${n.category} · ${n.date}</div>
+    <div style="font-size:.88rem;color:#555;line-height:1.6">${(n.content||'').slice(0,200)}${(n.content||'').length>200?'…':''}</div>
+  </div>`).join('');
+    html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
+  }
+
+  // ── Publications ─────────────────────────────────────────────────────────
+  if(monthPubs.length){
+    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📄 Recent Publications</h2>`;
+    html += monthPubs.map(p => `
+  <div style="background:#fff;border-radius:10px;padding:14px 20px;margin-bottom:10px">
+    <div style="font-weight:600;font-size:.92rem;margin-bottom:4px">${p.title}</div>
+    <div style="font-size:.78rem;color:#888">${(p.authors||'').replace(/<[^>]*>/g,'').slice(0,100)} · ${p.year||''}</div>
+    ${p.doi?`<a href="${p.doi}" style="font-size:.76rem;color:${green}">🔗 View Paper</a>`:''}
+  </div>`).join('');
+    html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
+  }
+
+  // ── Upcoming Events ───────────────────────────────────────────────────────
+  if(upcomingEvents.length){
+    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">📅 Upcoming Events</h2>`;
+    html += upcomingEvents.map(e => `
+  <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px">
+    <div style="min-width:52px;background:${green};color:#fff;border-radius:8px;padding:8px;text-align:center">
+      <div style="font-size:.65rem;text-transform:uppercase;opacity:.8">${NL_MONTHS[parseInt(e.date.slice(5,7))-1].slice(0,3)}</div>
+      <div style="font-size:1.4rem;font-weight:700;line-height:1">${parseInt(e.date.slice(8,10))}</div>
+    </div>
+    <div>
+      <div style="font-weight:600;font-size:.9rem">${e.title}</div>
+      <div style="font-size:.78rem;color:#888">${e.type||''}${e.time?' · '+e.time:''}${e.building?' · '+e.building:''}</div>
+    </div>
+  </div>`).join('');
+    html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
+  }
+
+  // ── Open Positions ────────────────────────────────────────────────────────
+  if(openPositions.length){
+    html += `<h2 style="font-size:1.4rem;color:${green};margin-bottom:8px">🔍 Open Positions</h2>`;
+    html += openPositions.map(r => `
+  <div style="background:#fff;border-radius:10px;padding:12px 18px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-weight:600;font-size:.88rem">${r.title}</div>
+      <div style="font-size:.75rem;color:#888">${r.type||''}${r.deadline?' · Deadline: '+r.deadline:''}</div>
+    </div>
+    <a href="${siteUrl}?page=recruiting" style="background:${gold};color:#fff;padding:5px 12px;border-radius:6px;font-size:.76rem;text-decoration:none">Apply</a>
+  </div>`).join('');
+    html += `<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">`;
+  }
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  html += `
+  <div style="text-align:center;padding:24px 0 8px;color:#999;font-size:.78rem">
+    <a href="${siteUrl}" style="color:${green};font-weight:600">${labName}</a><br>
+    <span>${D?.footer?.line2||''}</span><br><br>
+    You are receiving this because you subscribed at <a href="${siteUrl}" style="color:${green}">${siteUrl}</a>.<br>
+    <span style="color:#bbb">To unsubscribe, reply to this email with "Unsubscribe".</span>
+  </div>
+</div>
+</body>
+</html>`;
+
+  document.getElementById('nlBody').value = html;
+  nlSetTab('preview');
+  status.textContent = `✓ Generated — ${monthNews.length} news, ${monthPubs.length} publications, ${upcomingEvents.length} events`;
+}
+
+/* ── Send ──────────────────────────────────────────────────────────────────── */
+async function sendTestEmail(){
+  if(!_emailjsReady || EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID'){
+    alert('EmailJS not configured yet.\n\nAdd your Service ID, Template ID, and Public Key in the code.\nSee emailjs.com to set up a free account.');
+    return;
+  }
+  const subject = document.getElementById('nlSubject').value || 'DrAL Lab Newsletter';
+  const body    = document.getElementById('nlBody').value || '';
+  const testTo  = prompt('Send test to which email?', D?.about?.contact || '');
+  if(!testTo) return;
+  try{
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_NL_TEMPLATE_ID||EMAILJS_TEMPLATE_ID, {
+      to_email: testTo,
+      subject,
+      body,
+      lab_name: D?.footer?.line1 || 'DrAL Lab',
+      lab_url: window.location.origin,
+    });
+    alert(`✓ Test email sent to ${testTo}`);
+  }catch(e){
+    alert('Send failed: ' + e.text || e.message);
+    console.error(e);
+  }
+}
+
+async function sendNewsletterToAll(){
+  if(!_emailjsReady || EMAILJS_SERVICE_ID === 'YOUR_SERVICE_ID'){
+    alert('EmailJS not configured yet.\n\nAdd your Service ID, Template ID, and Public Key in the code.');
+    return;
+  }
+  if(!IS_CONFIGURED||!rtdb){ alert('Firebase not configured.'); return; }
+
+  const subject = document.getElementById('nlSubject').value?.trim();
+  const body    = document.getElementById('nlBody').value?.trim();
+  if(!subject||!body){ alert('Please fill in subject and body first.'); return; }
+
+  // Load subscribers
+  const snap = await rtdb.ref('newsletter').once('value');
+  const subscribers = [];
+  snap.forEach(child => {
+    const d = child.val();
+    if(d.active && d.email) subscribers.push(d.email);
+  });
+  if(!subscribers.length){ alert('No subscribers yet.'); return; }
+
+  const confirmed = confirm(
+    `Send to ${subscribers.length} subscriber${subscribers.length!==1?'s':''}?\n\nSubject: ${subject}`
+  );
+  if(!confirmed) return;
+
+  const btn = document.getElementById('nlSendBtn');
+  btn.disabled = true;
+  const progressWrap = document.getElementById('nlSendProgress');
+  const bar   = document.getElementById('nlProgressBar');
+  const text  = document.getElementById('nlProgressText');
+  progressWrap.style.display = 'block';
+
+  let sent = 0, failed = 0;
+  for(const email of subscribers){
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_NL_TEMPLATE_ID||EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        subject,
+        body,
+        lab_name: D?.footer?.line1 || 'DrAL Lab',
+        lab_url: window.location.origin,
+      });
+      sent++;
+    }catch(e){
+      console.warn('Failed to send to', email, e);
+      failed++;
+    }
+    const pct = Math.round(((sent+failed)/subscribers.length)*100);
+    bar.style.width = pct + '%';
+    text.textContent = `Sending… ${sent+failed}/${subscribers.length} (${failed} failed)`;
+    // EmailJS free tier: avoid rate limiting
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  // Log newsletter send in Firebase
+  await rtdb.ref('newsletter_log').push({
+    subject, sentAt: new Date().toISOString(),
+    total: subscribers.length, sent, failed,
+  });
+
+  logChange('Newsletter sent', `"${subject}" → ${sent} sent, ${failed} failed`);
+  btn.disabled = false;
+  text.textContent = `✓ Done — ${sent} sent, ${failed} failed`;
+  bar.style.background = failed ? 'var(--gold)' : 'var(--green)';
 }
 
 
