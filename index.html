@@ -883,6 +883,8 @@ const FIREBASE_CONFIG = {
     <span>🟢 Admin Mode — Add, edit, or delete news</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="add-btn" style="background:#0369a1" onclick="openNewsCatManager()">⚙ Categories</button>
+      <button class="add-btn" style="background:#475569" onclick="exportCSV('news')">↓ CSV</button>
+      <button class="add-btn" style="background:#475569" onclick="triggerCSVImport('news')">↑ Import</button>
       <button class="add-btn" onclick="openNewsForm()">+ Add News</button>
     </div>
   </div>
@@ -1992,7 +1994,6 @@ async function loadFromFirebase() {
       if(projectsSnap && projectsSnap.exists && (projectsSnap.data().projects||[]).length > 0)
         D.projects = projectsSnap.data().projects;
       else D.projects = D.projects || [];
-      console.log('[loadFromFirebase] projects loaded:', D.projects.length, 'projectsSnap exists:', projectsSnap&&projectsSnap.exists, 'projectsSnap data keys:', projectsSnap&&projectsSnap.exists?Object.keys(projectsSnap.data()):[]);
       // Migrate: rename "Deadline" type label to "Recruiting"
       if(D.calEventTypes) {
         let migrated=false;
@@ -2933,8 +2934,6 @@ function initPeriodFilters(){
 
 function rProjects(){
   if(!D) return;
-  // DEBUG: log projects array to console
-  console.log('[rProjects] D.projects count:', (D.projects||[]).length, 'sample:', JSON.stringify((D.projects||[])[0]||null).slice(0,200));
   initTagFilters();
   initPeriodFilters();
   const q=document.getElementById('ps').value.toLowerCase();
@@ -3020,7 +3019,7 @@ function openProjForm(id=null){
   document.getElementById('pFormTitle').textContent=id?'Edit Project':'Add Project';
   if(id){
     const p=gp(id);
-    _pickedMemberIds=[...p.memberIds];
+    _pickedMemberIds=[...(p.memberIds||[])];
     document.getElementById('pfId').value=p.id;
     document.getElementById('pfTitle').value=p.title;
     document.getElementById('pfAbbr').value=p.abbr||'';
@@ -4250,13 +4249,64 @@ function openEventDetail(evEncoded){
      ${locHtml}
      ${ev.desc?'<p style="margin-top:10px;font-size:.85rem;text-align:left;color:var(--text);white-space:pre-line">'+ev.desc+'</p>':''}
      ${ev.link?'<br><a href="'+ev.link+'" target="_blank" style="color:#2563eb">🔗 More info</a>':''}`;
-  document.getElementById('confirmOk').style.display='none';
-  document.getElementById('confirmCancel').style.display='none';
+  // Buttons for event detail modal
+  const okBtn    = document.getElementById('confirmOk');
+  const cancelBtn= document.getElementById('confirmCancel');
+  okBtn.style.display='none';
+  cancelBtn.style.display='none';
+  // Admin: show edit/delete buttons for all event types
+  if(isAdmin){
+    // Edit button — for news-sourced events, jump to news editor
+    let editBtn = document.getElementById('calDetailEditBtn');
+    if(!editBtn){
+      editBtn=document.createElement('button');
+      editBtn.id='calDetailEditBtn';
+      editBtn.className='btn-save';
+      editBtn.style.cssText='margin-top:12px;margin-right:8px';
+      document.getElementById('confirmModal').querySelector('.factions').prepend(editBtn);
+    }
+    let delBtn = document.getElementById('calDetailDelBtn');
+    if(!delBtn){
+      delBtn=document.createElement('button');
+      delBtn.id='calDetailDelBtn';
+      delBtn.className='btn-danger';
+      delBtn.style.cssText='margin-top:12px';
+      document.getElementById('confirmModal').querySelector('.factions').prepend(delBtn);
+    }
+    editBtn.style.display='inline-block';
+    delBtn.style.display='inline-block';
+    if(ev.newsId){
+      editBtn.textContent='✏️ Edit News';
+      editBtn.onclick=()=>{ closeModal('confirmModal'); openNewsForm(ev.newsId); };
+      delBtn.textContent='🗑 Delete';
+      delBtn.onclick=async()=>{
+        if(!confirm('Delete this news item and its calendar event?')) return;
+        D.news=D.news.filter(n=>n.id!==ev.newsId);
+        D.events=(D.events||[]).filter(e=>e.id!==ev.id);
+        await saveToFirebase();
+        closeModal('confirmModal'); rNews(); rCalendar();
+      };
+    } else if(!ev.autoGen){
+      editBtn.textContent='✏️ Edit';
+      editBtn.onclick=()=>{ closeModal('confirmModal'); openEventForm(ev.id); };
+      delBtn.textContent='🗑 Delete';
+      delBtn.onclick=async()=>{
+        if(!confirm('Delete this event?')) return;
+        D.events=(D.events||[]).filter(e=>e.id!==ev.id&&e.parentId!==ev.id);
+        await saveToFirebase();
+        closeModal('confirmModal'); rCalendar();
+      };
+    } else {
+      editBtn.style.display='none';
+      delBtn.style.display='none';
+    }
+  } else {
+    const editBtn=document.getElementById('calDetailEditBtn');
+    const delBtn=document.getElementById('calDetailDelBtn');
+    if(editBtn) editBtn.style.display='none';
+    if(delBtn)  delBtn.style.display='none';
+  }
   document.getElementById('confirmModal').classList.add('open');
-  document.getElementById('confirmModal').addEventListener('click',()=>{
-    document.getElementById('confirmOk').style.display='block';
-    document.getElementById('confirmCancel').style.display='block';
-  },{once:true});
 }
 
 function openEventForm(id=null){
@@ -5991,12 +6041,13 @@ function clearChangelog(){
 let _csvImportType = null;
 let _csvImportRows = [];
 
-const CSV_MEMBER_FIELDS = ['id','name','role','subRole','dept','email','status','advisor','orcid','bio','interests','education','currentAffiliation','scholar','tamu','webpage','order'];
+const CSV_MEMBER_FIELDS  = ['id','name','role','subRole','dept','email','status','advisor','orcid','bio','interests','education','currentAffiliation','scholar','tamu','webpage','order'];
 const CSV_PROJECT_FIELDS = ['id','abbr','title','desc','pi','funding','tags','status','startYear','endYear','driveUrl','recruiting','partners'];
+const CSV_NEWS_FIELDS    = ['id','title','category','date','content','author','link','eventDate','eventTime','location','building','room','address','mapsUrl'];
 
 function exportCSV(type){
-  const fields = type==='members' ? CSV_MEMBER_FIELDS : CSV_PROJECT_FIELDS;
-  const rows = type==='members' ? D.members : D.projects;
+  const fields = type==='members' ? CSV_MEMBER_FIELDS : type==='news' ? CSV_NEWS_FIELDS : CSV_PROJECT_FIELDS;
+  const rows   = type==='members' ? D.members : type==='news' ? (D.news||[]) : D.projects;
   const lines = [fields.join(',')];
   rows.forEach(row=>{
     lines.push(fields.map(f=>{
@@ -6063,17 +6114,19 @@ function importCSV(event){
       if(type==='members'){
         row.id = parseInt(row.id)||null;
         row.order = (row.order !== '' && row.order != null) ? (parseInt(row.order) || 0) : 0;
-        // Parse array fields from semicolon-separated
         row.interests = row.interests ? row.interests.split(';').map(s=>s.trim()).filter(Boolean) : [];
         row.education  = row.education  ? row.education.split(';').map(s=>s.trim()).filter(Boolean)  : [];
       }
+      if(type==='news'){
+        row.id = row.id ? parseInt(row.id)||('n-'+Date.now()+Math.random().toString(36).slice(2,6)) : ('n-'+Date.now()+Math.random().toString(36).slice(2,6));
+      }
       return row;
-    }).filter(r=>r.name||r.title);
+    }).filter(r=>r.name||r.title||r.category);
     _csvImportType = type;
     document.getElementById('csvPreviewTitle').textContent = `Import ${type} (${_csvImportRows.length} rows)`;
     document.getElementById('csvPreviewInfo').textContent = `${_csvImportRows.length} rows found. Rows with existing IDs will be updated; new rows will be added.`;
     // Preview table
-    const displayFields = type==='members' ? ['id','name','role','dept','status','email'] : ['id','abbr','title','status','pi','tags'];
+    const displayFields = type==='members' ? ['id','name','role','dept','status','email'] : type==='news' ? ['id','title','category','date','author'] : ['id','abbr','title','status','pi','tags'];
     document.getElementById('csvPreviewTable').innerHTML=`
       <table style="width:100%;border-collapse:collapse;font-size:.78rem">
         <thead><tr style="background:var(--green);color:#fff">${displayFields.map(f=>`<th style="padding:7px 10px;text-align:left">${f}</th>`).join('')}</tr></thead>
@@ -6094,11 +6147,15 @@ async function confirmCSVImport(){
   const type = _csvImportType;
   const btn = document.getElementById('csvImportConfirmBtn');
   btn.disabled=true; btn.textContent='Importing…';
-  const arr = type==='members' ? D.members : D.projects;
+  if(!D.news) D.news=[];
+  const arr = type==='members' ? D.members : type==='news' ? D.news : D.projects;
   let added=0, updated=0;
   _csvImportRows.forEach(row=>{
-    if(!row.id){
-      // New item — generate ID
+    if(type==='news'){
+      const idx = arr.findIndex(x=>String(x.id)===String(row.id));
+      if(idx>=0){ arr[idx]={...arr[idx],...row}; updated++; }
+      else { arr.unshift(row); added++; }
+    } else if(!row.id){
       row.id = nextId(arr);
       if(type==='members') row.memberIds=row.memberIds||[];
       arr.push(row); added++;
@@ -6111,11 +6168,13 @@ async function confirmCSVImport(){
   // Strip any undefined values introduced during CSV parsing before saving
   if(type==='members')  D.members  = JSON.parse(JSON.stringify(D.members));
   if(type==='projects') D.projects = JSON.parse(JSON.stringify(D.projects));
+  if(type==='news')     D.news     = JSON.parse(JSON.stringify(D.news));
   await saveToFirebase();
   logChange(`Imported ${type} CSV`, `${added} added, ${updated} updated`);
   btn.disabled=false; btn.textContent='Import';
   closeModal('csvPreviewModal');
   if(type==='members') rMembers();
+  else if(type==='news'){ rNews(); rCalendar(); }
   else rProjects();
   alert(`Import complete: ${added} added, ${updated} updated.`);
 }
