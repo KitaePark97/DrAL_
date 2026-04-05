@@ -2256,6 +2256,25 @@ async function addAboutPhotoFiles(input){
   }
 }
 let _afPillars=[];
+function renderAfPillarList(){
+  const el=document.getElementById('afPillarList'); if(!el) return;
+  el.innerHTML=_afPillars.map((p,i)=>`
+    <div style="display:flex;gap:6px;align-items:center;background:var(--bg);padding:8px 10px;border-radius:8px;border:1px solid var(--border)">
+      <input type="text" value="${p.icon||''}" placeholder="🔬" style="width:44px;text-align:center;padding:5px;border:1px solid var(--border);border-radius:6px;font-size:1rem"
+             oninput="_afPillars[${i}].icon=this.value">
+      <input type="text" value="${p.title||''}" placeholder="Pillar title" style="flex:1;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:.82rem"
+             oninput="_afPillars[${i}].title=this.value">
+      <input type="text" value="${p.text||''}" placeholder="Short description" style="flex:2;padding:5px 9px;border:1px solid var(--border);border-radius:6px;font-size:.82rem"
+             oninput="_afPillars[${i}].text=this.value">
+      <button onclick="_afPillars.splice(${i},1);renderAfPillarList()"
+              style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:0 4px">×</button>
+    </div>`).join('');
+}
+function addAfPillar(){
+  if(_afPillars.length>=4){alert('Maximum 4 pillars.');return;}
+  _afPillars.push({icon:'🔬',title:'',text:''});
+  renderAfPillarList();
+}
 function openAboutEdit(){
   _afPhotos=[...(D.aboutPhotos||[])];
   _afPillars=JSON.parse(JSON.stringify((D.about&&D.about.pillars)||[]));
@@ -5779,7 +5798,7 @@ function clearChangelog(){
 let _csvImportType = null;
 let _csvImportRows = [];
 
-const CSV_MEMBER_FIELDS = ['id','name','role','subRole','dept','email','status','advisor','bio','currentAffiliation','photoUrl','scholar','tamu','webpage','order'];
+const CSV_MEMBER_FIELDS = ['id','name','role','subRole','dept','email','status','advisor','orcid','bio','interests','education','currentAffiliation','photoUrl','scholar','tamu','webpage','order'];
 const CSV_PROJECT_FIELDS = ['id','abbr','title','desc','pi','funding','tags','status','startYear','endYear','driveUrl','recruiting','partners'];
 
 function exportCSV(type){
@@ -5851,6 +5870,9 @@ function importCSV(event){
       if(type==='members'){
         row.id = parseInt(row.id)||null;
         row.order = row.order!==''?parseInt(row.order):undefined;
+        // Parse array fields from semicolon-separated
+        row.interests = row.interests ? row.interests.split(';').map(s=>s.trim()).filter(Boolean) : [];
+        row.education  = row.education  ? row.education.split(';').map(s=>s.trim()).filter(Boolean)  : [];
       }
       return row;
     }).filter(r=>r.name||r.title);
