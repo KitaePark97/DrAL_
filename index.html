@@ -1880,7 +1880,7 @@ const ORCID_MAP = {
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
-let db, DOC_REF, PUB_REF;
+let db, DOC_REF, PUB_REF, NEWS_REF;
 
 let storage, STORAGE_REF, rtdb;
 if(IS_CONFIGURED) {
@@ -1888,6 +1888,7 @@ if(IS_CONFIGURED) {
   db = firebase.firestore();
   DOC_REF = db.collection('lab').doc('data');
   PUB_REF = db.collection('lab').doc('publications'); // separate doc for pubs
+  NEWS_REF = db.collection('lab').doc('news'); // separate doc for news
   storage = firebase.storage();
   STORAGE_REF = storage.ref();
   rtdb = firebase.database();
@@ -1963,24 +1964,30 @@ async function loadFromFirebase() {
   setLoading('Loading lab data…');
   try {
     const timeoutMs = 12000;
-    const snap = await Promise.race([
-      DOC_REF.get(),
+    const [snap, pubSnap, newsSnap] = await Promise.race([
+      Promise.all([DOC_REF.get(), PUB_REF ? PUB_REF.get() : Promise.resolve(null), NEWS_REF ? NEWS_REF.get() : Promise.resolve(null)]),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore read timeout')), timeoutMs))
     ]);
     if(snap.exists) {
       D = snap.data();
+      // Merge publications from separate doc
+      if(pubSnap && pubSnap.exists) D.publications = pubSnap.data().publications || [];
+      else D.publications = D.publications || [];
+      // Merge news from separate doc (override main doc's empty array)
+      if(newsSnap && newsSnap.exists) D.news = newsSnap.data().news || [];
+      else D.news = D.news || [];
       // Migrate: rename "Deadline" type label to "Recruiting"
       if(D.calEventTypes) {
         let migrated=false;
         D.calEventTypes.forEach(t=>{ if(t.id==='deadline'&&t.label==='Deadline'){t.label='Recruiting';migrated=true;} });
-        if(migrated) DOC_REF.set(D).catch(()=>{});
+        if(migrated) DOC_REF.set({...D, publications:[], news:[]}).catch(()=>{});
       }
     } else {
       // First time: seed data to Firebase
       setLoading('Setting up database (first time)…');
       D = JSON.parse(JSON.stringify(window.SEED_DATA));
       await Promise.race([
-        DOC_REF.set(D),
+        saveToFirebase(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore write timeout')), timeoutMs))
       ]);
     }
@@ -1994,32 +2001,46 @@ async function loadFromFirebase() {
 async function saveToFirebase() {
   if(!IS_CONFIGURED || !D) return;
   try {
-    // Split publications into a separate Firestore document to avoid 1MB limit
     const pubs = D.publications || [];
-    const mainD = stripLargeBase64({...D, publications: [] }); // store empty array in main doc
-    const safeMainSize = estimateDataSize(mainD);
-    if(safeMainSize > 950000) {
-      console.warn('Main data size', safeMainSize, 'bytes — very large even without publications');
+    const newsItems = D.news || [];
+    // Exclude publications and news from main doc (stored separately)
+    const mainD = stripLargeBase64({...D, publications: [], news: []});
+    const mainSize = estimateDataSize(mainD);
+    // Pre-save size check using accurate byte count
+    if(mainSize > 950000) {
+      alert('⚠️ Save failed: main data is too large (' + Math.round(mainSize/1024) + ' KB).\n\nTry shortening member bios, project descriptions, or removing unused data.\nNote: Korean/Unicode text counts as 3 bytes per character.');
+      return;
     }
-    // Save main data (no publications)
+    // Save main data (no publications, no news)
     await DOC_REF.set(mainD);
-    // Save publications separately (each doc up to 1MB; chunk if needed)
+    // Save publications separately
     if(PUB_REF) {
-      const pubStr = JSON.stringify(pubs);
-      if(pubStr.length < 900000) {
+      const pubSize = estimateDataSize({publications: pubs});
+      if(pubSize < 900000) {
         await PUB_REF.set({ publications: pubs, updatedAt: new Date().toISOString() });
       } else {
-        // Too large even alone — truncate to newest 500
         const trimmed = [...pubs].sort((a,b)=>(b.year||0)-(a.year||0)).slice(0,500);
         await PUB_REF.set({ publications: trimmed, updatedAt: new Date().toISOString() });
         console.warn('Publications truncated to 500 entries to fit 1MB limit');
+      }
+    }
+    // Save news separately
+    if(NEWS_REF) {
+      const newsSize = estimateDataSize({news: newsItems});
+      if(newsSize < 900000) {
+        await NEWS_REF.set({ news: newsItems, updatedAt: new Date().toISOString() });
+      } else {
+        // Keep newest 200 news items if too large
+        const trimmed = [...newsItems].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,200);
+        await NEWS_REF.set({ news: trimmed, updatedAt: new Date().toISOString() });
+        console.warn('News trimmed to 200 items to fit 1MB limit');
       }
     }
     showSaved();
   } catch(e) {
     console.error('Save error:', e);
     if(e.code === 'invalid-argument' || (e.message&&(e.message.includes('size')||e.message.includes('too large')))) {
-      alert('⚠️ Save failed: data is still too large.\n\nThis may be due to base64 images in member profiles. Use image URLs (Google Drive or Cloudinary) instead of uploading files directly.');
+      alert('⚠️ Save failed: data is still too large.\n\nCheck member bios, project descriptions, and news content. Korean/Unicode text takes 3x more space than ASCII.');
     } else {
       alert('Save failed. Check your internet connection.\n\nError: ' + (e.message||String(e)));
     }
@@ -2036,7 +2057,7 @@ const FIRESTORE_MAX_BASE64 = 400000; // ~300KB image — safe limit per base64 s
 function stripLargeBase64(obj, _depth=0) {
   if(_depth > 8) return obj;
   if(typeof obj === 'string') {
-    if(obj.startsWith('data:')) {
+    if(obj.startsWith('data:')) { // strip ALL base64 regardless of size
       return null; // will be filtered from arrays
     }
     return obj;
@@ -2062,7 +2083,9 @@ function stripLargeBase64(obj, _depth=0) {
  * Used to warn before saving overly large data.
  */
 function estimateDataSize(obj) {
-  return JSON.stringify(obj).length;
+  // Use actual UTF-8 byte count (important for Korean/Unicode text)
+  try { return new TextEncoder().encode(JSON.stringify(obj)).length; }
+  catch(e) { return JSON.stringify(obj).length; }
 }
 
 // Real-time listener: when data changes in Firebase, update all visitors
@@ -2076,24 +2099,19 @@ function startRealtimeListener() {
         if(D.calEventTypes) {
           D.calEventTypes.forEach(t=>{ if(t.id==='deadline'&&t.label==='Deadline') t.label='Recruiting'; });
         }
-        // Load publications from separate doc (merge in)
-        if(PUB_REF) {
-          PUB_REF.get().then(pubSnap => {
-            if(pubSnap.exists) {
-              D.publications = pubSnap.data().publications || [];
-            }
+        // Load publications and news from separate docs (merge in)
+        const fetches = [];
+        if(PUB_REF) fetches.push(PUB_REF.get().then(s => { if(s.exists) D.publications = s.data().publications||[]; }));
+        if(NEWS_REF) fetches.push(NEWS_REF.get().then(s => { if(s.exists) D.news = s.data().news||[]; }));
+        Promise.all(fetches).then(() => {
             clearTimeout(_renderDebounce);
             _renderDebounce = setTimeout(renderAll, 600);
           }).catch(() => {
-            // If pub doc missing, use empty
             D.publications = D.publications || [];
+            D.news = D.news || [];
             clearTimeout(_renderDebounce);
             _renderDebounce = setTimeout(renderAll, 600);
           });
-        } else {
-          clearTimeout(_renderDebounce);
-          _renderDebounce = setTimeout(renderAll, 600);
-        }
       }
     },
     err => { console.error('Realtime listener error:', err); }
@@ -6009,7 +6027,7 @@ async function confirmCSVImport(){
       arr.push(row); added++;
     } else {
       const idx = arr.findIndex(x=>x.id===row.id);
-      if(idx>=0){ const existing=arr[idx]; const merged={...existing,...row}; if(existing.photoUrl) merged.photoUrl=existing.photoUrl; if(existing.photos) merged.photos=existing.photos; arr[idx]=merged; updated++; }
+      if(idx>=0){ const ex=arr[idx]; const mg={...ex,...row}; if(ex.photoUrl) mg.photoUrl=ex.photoUrl; if(ex.photos) mg.photos=ex.photos; arr[idx]=mg; updated++; }
       else { arr.push(row); added++; }
     }
   });
