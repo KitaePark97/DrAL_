@@ -2008,11 +2008,11 @@ async function loadFromFirebase() {
         console.log('Auto-migrating: moving members/projects out of lab/data…');
         const migrateOps = [];
         if(MEMBERS_REF  && rawMain.members  && rawMain.members.length  > 0)
-          migrateOps.push(MEMBERS_REF.set({ members: rawMain.members, updatedAt: new Date().toISOString() }));
+          migrateOps.push(MEMBERS_REF.set(cleanForFirestore({ members: rawMain.members, updatedAt: new Date().toISOString() })));
         if(PROJECTS_REF && rawMain.projects && rawMain.projects.length > 0)
-          migrateOps.push(PROJECTS_REF.set({ projects: rawMain.projects, updatedAt: new Date().toISOString() }));
+          migrateOps.push(PROJECTS_REF.set(cleanForFirestore({ projects: rawMain.projects, updatedAt: new Date().toISOString() })));
         Promise.all(migrateOps)
-          .then(() => DOC_REF.set({...rawMain, members:[], projects:[], publications:[], news:[]}).catch(()=>{}))
+          .then(() => DOC_REF.set(cleanForFirestore({...rawMain, members:[], projects:[], publications:[], news:[]})).catch(()=>{}))
           .then(() => console.log('Auto-migration complete.'))
           .catch(e => console.error('Auto-migration failed:', e));
       }
@@ -2030,6 +2030,16 @@ async function loadFromFirebase() {
     // Fallback to seed data if offline
     D = JSON.parse(JSON.stringify(window.SEED_DATA));
   }
+}
+
+/**
+ * Recursively remove undefined values from an object so Firestore never
+ * receives an "Unsupported field value: undefined" error.
+ * JSON round-trip is the safest approach — undefined values are dropped.
+ */
+function cleanForFirestore(obj) {
+  try { return JSON.parse(JSON.stringify(obj)); }
+  catch(e) { console.error('cleanForFirestore error:', e); return obj; }
 }
 
 async function saveToFirebase() {
@@ -2065,20 +2075,20 @@ async function saveToFirebase() {
 
     // Build all save operations and run in parallel
     const saves = [
-      DOC_REF.set(mainD),
-      MEMBERS_REF  ? MEMBERS_REF.set({ members,  updatedAt: new Date().toISOString() })  : null,
-      PROJECTS_REF ? PROJECTS_REF.set({ projects, updatedAt: new Date().toISOString() }) : null,
+      DOC_REF.set(cleanForFirestore(mainD)),
+      MEMBERS_REF  ? MEMBERS_REF.set(cleanForFirestore({ members,  updatedAt: new Date().toISOString() }))  : null,
+      PROJECTS_REF ? PROJECTS_REF.set(cleanForFirestore({ projects, updatedAt: new Date().toISOString() })) : null,
     ].filter(Boolean);
 
     if(PUB_REF) {
       const pubsToSave = pubSize < 900000 ? pubs : [...pubs].sort((a,b)=>(b.year||0)-(a.year||0)).slice(0,500);
       if(pubSize >= 900000) console.warn('Publications truncated to 500 entries');
-      saves.push(PUB_REF.set({ publications: pubsToSave, updatedAt: new Date().toISOString() }));
+      saves.push(PUB_REF.set(cleanForFirestore({ publications: pubsToSave, updatedAt: new Date().toISOString() })));
     }
     if(NEWS_REF) {
       const newsToSave = newsSize < 900000 ? newsItems : [...newsItems].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,200);
       if(newsSize >= 900000) console.warn('News trimmed to 200 items');
-      saves.push(NEWS_REF.set({ news: newsToSave, updatedAt: new Date().toISOString() }));
+      saves.push(NEWS_REF.set(cleanForFirestore({ news: newsToSave, updatedAt: new Date().toISOString() })));
     }
 
     await Promise.all(saves);
@@ -6041,11 +6051,11 @@ function importCSV(event){
         row.startYear = parseInt(row.startYear)||null;
         row.endYear = parseInt(row.endYear)||null;
         row.recruiting = row.recruiting==='true';
-        row.order = row.order!==''?parseInt(row.order):undefined;
+        row.order = (row.order !== '' && row.order != null) ? (parseInt(row.order) || 0) : 0;
       }
       if(type==='members'){
         row.id = parseInt(row.id)||null;
-        row.order = row.order!==''?parseInt(row.order):undefined;
+        row.order = (row.order !== '' && row.order != null) ? (parseInt(row.order) || 0) : 0;
         // Parse array fields from semicolon-separated
         row.interests = row.interests ? row.interests.split(';').map(s=>s.trim()).filter(Boolean) : [];
         row.education  = row.education  ? row.education.split(';').map(s=>s.trim()).filter(Boolean)  : [];
@@ -6091,6 +6101,9 @@ async function confirmCSVImport(){
       else { arr.push(row); added++; }
     }
   });
+  // Strip any undefined values introduced during CSV parsing before saving
+  if(type==='members')  D.members  = JSON.parse(JSON.stringify(D.members));
+  if(type==='projects') D.projects = JSON.parse(JSON.stringify(D.projects));
   await saveToFirebase();
   logChange(`Imported ${type} CSV`, `${added} added, ${updated} updated`);
   btn.disabled=false; btn.textContent='Import';
@@ -6546,6 +6559,10 @@ async function init(){
   try{
     await loadFromFirebase();
     renderAll();
+    // Warn admin if projects appear to have been lost (empty after load)
+    if(isAdmin && (!D.projects || D.projects.length === 0)) {
+      console.warn('Projects array is empty after load. If projects were lost, restore from a CSV backup or browser cache.');
+    }
     initHeroBg();
     initRecTypeFilters();
     rCalendar();
