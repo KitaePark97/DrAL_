@@ -1880,7 +1880,7 @@ const ORCID_MAP = {
 };
 
 const IS_CONFIGURED = FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
-let db, DOC_REF, PUB_REF, NEWS_REF;
+let db, DOC_REF, PUB_REF, NEWS_REF, MEMBERS_REF;
 
 let storage, STORAGE_REF, rtdb;
 if(IS_CONFIGURED) {
@@ -1889,6 +1889,7 @@ if(IS_CONFIGURED) {
   DOC_REF = db.collection('lab').doc('data');
   PUB_REF = db.collection('lab').doc('publications'); // separate doc for pubs
   NEWS_REF = db.collection('lab').doc('news'); // separate doc for news
+  MEMBERS_REF = db.collection('lab').doc('members'); // separate doc for members
   storage = firebase.storage();
   STORAGE_REF = storage.ref();
   rtdb = firebase.database();
@@ -1964,8 +1965,8 @@ async function loadFromFirebase() {
   setLoading('Loading lab data…');
   try {
     const timeoutMs = 12000;
-    const [snap, pubSnap, newsSnap] = await Promise.race([
-      Promise.all([DOC_REF.get(), PUB_REF ? PUB_REF.get() : Promise.resolve(null), NEWS_REF ? NEWS_REF.get() : Promise.resolve(null)]),
+    const [snap, pubSnap, newsSnap, membersSnap] = await Promise.race([
+      Promise.all([DOC_REF.get(), PUB_REF ? PUB_REF.get() : Promise.resolve(null), NEWS_REF ? NEWS_REF.get() : Promise.resolve(null), MEMBERS_REF ? MEMBERS_REF.get() : Promise.resolve(null)]),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore read timeout')), timeoutMs))
     ]);
     if(snap.exists) {
@@ -1976,11 +1977,14 @@ async function loadFromFirebase() {
       // Merge news from separate doc (override main doc's empty array)
       if(newsSnap && newsSnap.exists) D.news = newsSnap.data().news || [];
       else D.news = D.news || [];
+      // Merge members from separate doc (if it exists, it's the authoritative source)
+      if(membersSnap && membersSnap.exists) D.members = membersSnap.data().members || [];
+      else D.members = D.members || [];
       // Migrate: rename "Deadline" type label to "Recruiting"
       if(D.calEventTypes) {
         let migrated=false;
         D.calEventTypes.forEach(t=>{ if(t.id==='deadline'&&t.label==='Deadline'){t.label='Recruiting';migrated=true;} });
-        if(migrated) DOC_REF.set({...D, publications:[], news:[]}).catch(()=>{});
+        if(migrated) DOC_REF.set({...D, publications:[], news:[], members:[]}).catch(()=>{});
       }
     } else {
       // First time: seed data to Firebase
@@ -2003,16 +2007,27 @@ async function saveToFirebase() {
   try {
     const pubs = D.publications || [];
     const newsItems = D.news || [];
-    // Exclude publications and news from main doc (stored separately)
-    const mainD = stripLargeBase64({...D, publications: [], news: []});
+    const members = D.members || [];
+    // Exclude publications, news, and members from main doc (stored separately)
+    const mainD = stripLargeBase64({...D, publications: [], news: [], members: []});
     const mainSize = estimateDataSize(mainD);
     // Pre-save size check using accurate byte count
     if(mainSize > 950000) {
-      alert('⚠️ Save failed: main data is too large (' + Math.round(mainSize/1024) + ' KB).\n\nTry shortening member bios, project descriptions, or removing unused data.\nNote: Korean/Unicode text counts as 3 bytes per character.');
+      alert('⚠️ Save failed: main data is too large (' + Math.round(mainSize/1024) + ' KB).\n\nTry shortening project descriptions or removing unused data.\nNote: Korean/Unicode text counts as 3 bytes per character.');
       return;
     }
-    // Save main data (no publications, no news)
+    // Save main data (no publications, no news, no members)
     await DOC_REF.set(mainD);
+    // Save members separately
+    if(MEMBERS_REF) {
+      const membersSize = estimateDataSize({members});
+      if(membersSize < 900000) {
+        await MEMBERS_REF.set({ members, updatedAt: new Date().toISOString() });
+      } else {
+        console.warn('Members data is very large (' + Math.round(membersSize/1024) + ' KB) — saving as-is but may hit Firestore limits');
+        await MEMBERS_REF.set({ members, updatedAt: new Date().toISOString() });
+      }
+    }
     // Save publications separately
     if(PUB_REF) {
       const pubSize = estimateDataSize({publications: pubs});
@@ -2103,12 +2118,14 @@ function startRealtimeListener() {
         const fetches = [];
         if(PUB_REF) fetches.push(PUB_REF.get().then(s => { if(s.exists) D.publications = s.data().publications||[]; }));
         if(NEWS_REF) fetches.push(NEWS_REF.get().then(s => { if(s.exists) D.news = s.data().news||[]; }));
+        if(MEMBERS_REF) fetches.push(MEMBERS_REF.get().then(s => { if(s.exists) D.members = s.data().members||[]; }));
         Promise.all(fetches).then(() => {
             clearTimeout(_renderDebounce);
             _renderDebounce = setTimeout(renderAll, 600);
           }).catch(() => {
             D.publications = D.publications || [];
             D.news = D.news || [];
+            D.members = D.members || [];
             clearTimeout(_renderDebounce);
             _renderDebounce = setTimeout(renderAll, 600);
           });
