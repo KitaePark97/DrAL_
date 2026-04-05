@@ -2936,7 +2936,10 @@ function rProjects(){
   initPeriodFilters();
   const q=document.getElementById('ps').value.toLowerCase();
   let list=D.projects.filter(p=>{
-    if(pFilter!=='all'&&!p.tags.includes(pFilter)) return false;
+    if(!p || !p.title) return false; // skip malformed entries
+    const ptags = p.tags || [];
+    const pdesc = (p.desc || '').toLowerCase();
+    if(pFilter!=='all'&&!ptags.includes(pFilter)) return false;
     if(pStatusF!=='all'&&p.status!==pStatusF) return false;
     if(pPeriodF!=='all'){
       const hasYears=p.startYear||p.endYear;
@@ -2945,7 +2948,7 @@ function rProjects(){
         if(pPeriodF<start||pPeriodF>end) return false;
       }
     }
-    if(q&&!p.title.toLowerCase().includes(q)&&!p.desc.toLowerCase().includes(q)) return false;
+    if(q&&!(p.title||'').toLowerCase().includes(q)&&!pdesc.includes(q)) return false;
     return true;
   });
   // Custom order if set
@@ -2954,8 +2957,8 @@ function rProjects(){
   const g=document.getElementById('pGrid');
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
   g.innerHTML=list.map(p=>{
-    const tags=p.tags.map(t=>`<span class="tag" style="${tagStyle(t)}">${t}</span>`).join('');
-    const chips=p.memberIds.map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
+    const tags=(p.tags||[]).map(t=>`<span class="tag" style="${tagStyle(t)}">${t}</span>`).join('');
+    const chips=(p.memberIds||[]).map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
     const lnk=p.driveUrl
       ?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">🔗 Link</a>`
       :(isAdmin
