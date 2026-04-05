@@ -2655,7 +2655,7 @@ function openMemberView(id){
     m.tamu?`<a class="mlink" href="${m.tamu}" target="_blank">🏛 TAMU Profile</a>`:'',
     m.webpage?`<a class="mlink" href="${m.webpage}" target="_blank">🌐 Personal Webpage</a>`:'',
   ].join('');
-  const projs=D.projects.filter(p=>p.memberIds.includes(id));
+  const projs=D.projects.filter(p=>(p.memberIds||[]).includes(id));
   document.getElementById('mvProjs').innerHTML=projs.length?`<h4>Projects</h4>${projs.map(p=>`<span class="pp">${p.title}</span>`).join('')}`:'';
   document.getElementById('mvAdminActions').style.display=isAdmin?'flex':'none';
   openModal('mViewModal');
@@ -2988,10 +2988,10 @@ function rProjects(){
           </div>
           ${isAdmin?`<div style="display:flex;gap:4px;flex-shrink:0"><button class="ica ica-edit" onclick="openProjForm(${p.id})">✏️</button><button class="ica ica-del" onclick="confirmDelete('project',${p.id})">🗑</button></div>`:''}
         </div>
-        <p class="pc-desc">${p.desc}</p>
+        <p class="pc-desc">${p.desc||''}</p>
       </div>
       <div class="pc-body">
-        <div class="team-lbl">Team (${p.memberIds.length})${isAdmin?' — ✕ to remove':''}:</div>
+        <div class="team-lbl">Team (${ (p.memberIds||[]).length })${isAdmin?' — ✕ to remove':''}:</div>
         <div class="chips">${chips}</div>
         ${isAdmin?`<button class="add-btn" style="margin-top:10px;font-size:.75rem;padding:6px 14px" onclick="openProjForm(${p.id})">+ Add Team Member</button>`:''}
       </div>
@@ -3009,7 +3009,7 @@ function rProjects(){
 async function removeMemberFromProj(projId,memberId,e){
   e.stopPropagation();
   const p=gp(projId);
-  p.memberIds=p.memberIds.filter(id=>id!==memberId);
+  p.memberIds=(p.memberIds||[]).filter(id=>id!==memberId);
   await saveToFirebase();
   rProjects();
 }
@@ -3027,7 +3027,7 @@ function openProjForm(id=null){
     document.getElementById('pfDesc').value=p.desc;
     document.getElementById('pfPi').value=p.pi||'';
     document.getElementById('pfFunding').value=p.funding||'';
-    document.getElementById('pfTags').value=p.tags.join(', ');
+    document.getElementById('pfTags').value=(p.tags||[]).join(', ');
     document.getElementById('pfStatus').value=p.status;
     document.getElementById('pfDrive').value=p.driveUrl||'';
     document.getElementById('pfPartners').value=(p.partners||[]).join('\n');
@@ -3749,7 +3749,7 @@ function confirmDelete(type,id){
   document.getElementById('confirmOk').onclick=async()=>{
     if(type==='member'){
       D.members=D.members.filter(m=>m.id!==id);
-      D.projects.forEach(p=>{p.memberIds=p.memberIds.filter(mid=>mid!==id)});
+      D.projects.forEach(p=>{p.memberIds=(p.memberIds||[]).filter(mid=>mid!==id)});
     } else if(type==='project'){
       D.projects=D.projects.filter(p=>p.id!==id);
     } else if(type==='rec'){
