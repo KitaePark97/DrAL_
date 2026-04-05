@@ -114,6 +114,8 @@ nav{
 .fbar input{flex:1;min-width:200px;padding:9px 15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;background:var(--white);outline:none;transition:border-color .2s;color:var(--text)}
 .fbar input:focus{border-color:var(--green)}
 .fb{padding:8px 19px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:.78rem;color:var(--text);transition:all .2s}
+.fb.fb-former{border-color:#9a6b9a;color:#6b3d6b;background:#f9f0f9}
+.fb.fb-former:hover,.fb.fb-former.on{background:#6b3d6b;border-color:#6b3d6b;color:#fff}
 .fb:hover,.fb.on{background:var(--green);border-color:var(--green);color:#fff}
 
 /* ═══════════════════════════ ADMIN BAR ═══════════════════════════ */
@@ -739,7 +741,7 @@ const FIREBASE_CONFIG = {
   <!-- Research Pillars -->
   <div id="aboutPillarsSection" style="display:none;margin-bottom:32px">
     <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px">Research Pillars</div>
-    <div id="aboutPillarsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>
+    <div id="aboutPillarsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px"></div>
   </div>
 
   <!-- Mission / About text (full width) -->
@@ -2336,7 +2338,7 @@ function renderAfPillarList(){
     </div>`).join('');
 }
 function addAfPillar(){
-  if(_afPillars.length>=4){alert('Maximum 4 pillars.');return;}
+  if(_afPillars.length>=6){alert('Maximum 6 pillars.');return;}
   _afPillars.push({icon:'🔬',title:'',text:''});
   renderAfPillarList();
 }
@@ -2392,10 +2394,10 @@ function initMemberFilters(){
     b.onclick=()=>mf(r,b);
     bar.appendChild(b);
   });
-  // Always add Former tab
+  // Always add Former tab — visually distinct
   const fb=document.createElement('button');
-  fb.className='fb'+(mFilter==='Former'?' on':'');
-  fb.textContent='Former';
+  fb.className='fb fb-former'+(mFilter==='Former'?' on':'');
+  fb.textContent='🎓 Alumni';
   fb.onclick=()=>mf('Former',fb);
   bar.appendChild(fb);
 }
@@ -2461,8 +2463,13 @@ function openRoleManager(){
 function renderRoleList(){
   const roles=D.memberRoles||DEFAULT_MEMBER_ROLES;
   document.getElementById('roleList').innerHTML=roles.map((r,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;background:var(--green-pale);color:var(--green);padding:5px 11px;border-radius:20px;font-size:.79rem;font-weight:500">
-      ${r}
+    <div draggable="true" data-idx="${i}"
+         ondragstart="listDndStart(event,'role',${i})"
+         ondragover="listDndOver(event)"
+         ondragleave="listDndLeave(event)"
+         ondrop="listDndDrop(event,'role',${i})"
+         style="display:flex;align-items:center;gap:6px;background:var(--green-pale);color:var(--green);padding:5px 11px;border-radius:20px;font-size:.79rem;font-weight:500;cursor:grab;border:1.5px solid transparent">
+      <span style="font-size:.68rem;opacity:.45">⠿</span>${r}
       <button onclick="removeRole(${i})" style="background:none;border:none;color:inherit;cursor:pointer;font-size:.9rem;padding:0;line-height:1">×</button>
     </div>`).join('');
 }
@@ -4964,6 +4971,7 @@ async function listDndDrop(e, type, toIdx){
   if(type==='tag'){ arr=D.projectTags; rerender=()=>{renderTagList();initTagFilters();} }
   else if(type==='rectype'){ arr=D.recTypes=D.recTypes||[...DEFAULT_REC_TYPES]; rerender=renderRecTypeList; }
   else if(type==='newscat'){ arr=D.newsCategories=D.newsCategories||[...DEFAULT_NEWS_CATS]; rerender=()=>{renderNewsCatList();buildNewsCatFilterBar();populateNfCat();} }
+  else if(type==='role'){ arr=D.memberRoles=D.memberRoles||[...DEFAULT_MEMBER_ROLES]; rerender=()=>{renderRoleList();initMemberFilters();} }
   if(!arr) return;
   const item=arr.splice(from,1)[0];
   arr.splice(toIdx,0,item);
