@@ -1711,7 +1711,7 @@ const FIREBASE_CONFIG = {
   <div class="modal" style="max-width:360px;text-align:center">
     <h3 id="confirmMsg" style="font-size:1.3rem;margin-bottom:10px"></h3>
     <p id="confirmSub" style="font-size:.85rem;color:var(--muted);margin-bottom:24px">This action cannot be undone.</p>
-    <div style="display:flex;gap:10px;justify-content:center">
+    <div class="factions" style="display:flex;gap:10px;justify-content:center">
       <button id="confirmCancel" class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
       <button class="btn-danger" id="confirmOk">Delete</button>
     </div>
@@ -1930,6 +1930,21 @@ const ini  = n => n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
 const gm   = id => D.members.find(m=>m.id===id);
 const gp   = id => D.projects.find(p=>p.id===id);
 const fmt  = s => s ? new Date(s+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Open';
+function normalizeDate(s){
+  if(!s) return s;
+  s=String(s).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // M/D/YYYY or MM/DD/YYYY (Excel default)
+  const mdy=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(mdy) return `${mdy[3]}-${mdy[1].padStart(2,'0')}-${mdy[2].padStart(2,'0')}`;
+  // YYYY/MM/DD
+  const ymd=s.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if(ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  // D-Mon-YYYY or similar fallback
+  const d=new Date(s);
+  if(!isNaN(d)) return d.toISOString().slice(0,10);
+  return s;
+}
 const rb   = r => ({'Faculty':'rb-f','PhD Student':'rb-p','Master Student':'rb-ms','Undergraduate Student':'rb-ug','Post Doc':'rb-d','Researcher':'rb-r','Visiting Scholar':'rb-d'}[r]||'rb-p');
 /* Sort order: PI > Faculty > Researcher > PostDoc > PhD > Master > Undergraduate (alpha within) */
 const ROLE_ORDER = {'Faculty':0,'Researcher':1,'Post Doc':2,'Visiting Scholar':2.5,'PhD Student':3,'Master Student':4,'Undergraduate Student':5};
@@ -4142,7 +4157,7 @@ function rCalendar(){
       const typeObj=getEvType(ev.type);
       const safeTitle=ev.title.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
       const click=ev.recId
-        ? `gotoRecDeadline(${ev.recId})`
+        ? (isAdmin ? `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')` : `gotoRecDeadline(${ev.recId})`)
         : `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')`;
       return `<div class="cal-event" style="background:${typeObj.bg};color:${typeObj.text}" onclick="${click}" title="${safeTitle}">${safeTitle}</div>`;
     }).join('');
@@ -4176,7 +4191,7 @@ function rCalendar(){
       ? `${MONTHS[parseInt(ev.date.slice(5,7))-1].slice(0,3)} ${parseInt(ev.date.slice(8,10))} – ${MONTHS[parseInt(ev.endDate.slice(5,7))-1].slice(0,3)} ${parseInt(ev.endDate.slice(8,10))}, ${ev.endDate.slice(0,4)}`
       : new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     const click=ev.recId
-      ? `gotoRecDeadline(${ev.recId})`
+      ? (isAdmin ? `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')` : `gotoRecDeadline(${ev.recId})`)
       : `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')`;
     return `
     <div style="display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 18px;cursor:pointer;transition:box-shadow .2s" onclick="${click}" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
@@ -4189,9 +4204,14 @@ function rCalendar(){
         <div style="font-weight:500;font-size:.9rem">${ev.title}</div>
         <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${typeObj.label} · ${dateStr}${ev.time?' · '+ev.time:''}</div>
         ${ev.building||ev.room?`<div style="font-size:.73rem;color:var(--muted);margin-top:2px">📍 ${[ev.building,ev.room].filter(Boolean).join(' · ')}</div>`:''}
-        ${ev.recId?'<div style="font-size:.72rem;color:var(--green-l);margin-top:2px">→ View in Recruiting</div>':''}
+        ${ev.recId&&!isAdmin?'<div style="font-size:.72rem;color:var(--green-l);margin-top:2px">→ View in Recruiting</div>':''}
       </div>
-      ${isAdmin&&!ev.autoGen?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${ev.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();confirmDelete('event','${ev.id}')">🗑</button></div>`:''}
+      ${isAdmin?(ev.recId
+        ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openRecForm(${ev.recId})" title="Edit Recruiting">✏️</button></div>`
+        :ev.newsId
+          ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openNewsForm(${ev.newsId})" title="Edit News">✏️</button></div>`
+          :`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${ev.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();confirmDelete('event','${ev.id}')">🗑</button></div>`
+      ):''}
     </div>`;
   }).join('');
 }
@@ -4285,6 +4305,16 @@ function openEventDetail(evEncoded){
         D.events=(D.events||[]).filter(e=>e.id!==ev.id);
         await saveToFirebase();
         closeModal('confirmModal'); rNews(); rCalendar();
+      };
+    } else if(ev.recId){
+      editBtn.textContent='✏️ Edit Recruiting';
+      editBtn.onclick=()=>{ closeModal('confirmModal'); openRecForm(ev.recId); };
+      delBtn.textContent='🗑 Clear Deadline';
+      delBtn.onclick=async()=>{
+        if(!confirm('Remove this deadline from the calendar?\nThe recruiting posting will be kept.')) return;
+        const r=D.recruiting.find(x=>x.id===ev.recId);
+        if(r){ r.deadline=null; await saveToFirebase(); }
+        closeModal('confirmModal'); rCalendar();
       };
     } else if(!ev.autoGen){
       editBtn.textContent='✏️ Edit';
@@ -6119,6 +6149,8 @@ function importCSV(event){
       }
       if(type==='news'){
         row.id = row.id ? parseInt(row.id)||('n-'+Date.now()+Math.random().toString(36).slice(2,6)) : ('n-'+Date.now()+Math.random().toString(36).slice(2,6));
+        if(row.date) row.date = normalizeDate(row.date);
+        if(row.eventDate) row.eventDate = normalizeDate(row.eventDate);
       }
       return row;
     }).filter(r=>r.name||r.title||r.category);
