@@ -25,10 +25,25 @@
   --red:#c0392b;--red-pale:#fef2f2;
   --text:#1a1a1a;--muted:#6b7280;--border:#e0dbd2;
   --admin:#059669;
+  /* ── Typography variables ── */
+  --tp-heading-font:'Cormorant Garamond',serif;
+  --tp-page-title-size:2.1rem;
+  --tp-page-title-color:#2d4a3e;
+  --tp-page-title-weight:600;
+  --tp-page-sub-size:.88rem;
+  --tp-page-sub-color:#6b7280;
+  --tp-tagline-size:2rem;
+  --tp-tagline-color:#2d4a3e;
+  --tp-tagline-weight:600;
+  --tp-hero-size:3.4rem;
+  --tp-hero-weight:600;
+  --tp-body-size:1rem;
+  --tp-item-title-size:1.3rem;
+  --tp-item-title-weight:600;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:var(--tp-body-size)}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 
@@ -82,7 +97,7 @@ nav{
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(138deg,rgba(30,58,46,.82) 0%,rgba(42,85,65,.7) 55%,rgba(45,74,62,.6) 100%);z-index:1}
 .hero>*{position:relative;z-index:2}
 .hero-text{flex:1;min-width:0}
-.hero-text h1{font-family:'Cormorant Garamond',serif;font-size:3.4rem;font-weight:600;line-height:1.1}
+.hero-text h1{font-family:var(--tp-heading-font);font-size:var(--tp-hero-size);font-weight:var(--tp-hero-weight);line-height:1.1}
 .hero-text h1 em{font-style:italic;color:#a5d4c4}
 .hero-text p{margin-top:16px;max-width:460px;font-size:.96rem;opacity:.9;line-height:1.75}
 .hero-cta{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
@@ -104,9 +119,9 @@ nav{
 .page{display:none;max-width:1200px;margin:0 auto;padding:52px 48px}
 .page.on{display:block}
 .sh{margin-bottom:36px}
-.sh h2{font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:600;color:var(--green)}
+.sh h2{font-family:var(--tp-heading-font);font-size:var(--tp-page-title-size);font-weight:var(--tp-page-title-weight);color:var(--tp-page-title-color)}
 .sh-line{width:46px;height:3px;background:var(--gold);border-radius:2px;margin:11px 0}
-.sh p{font-size:.88rem;color:var(--muted)}
+.sh p{font-size:var(--tp-page-sub-size);color:var(--tp-page-sub-color)}
 .sh-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 /* ═══════════════════════════ FILTER BAR ═══════════════════════════ */
@@ -158,7 +173,7 @@ nav{
 .tag{padding:2px 12px;border-radius:10px;font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 .t-Health{background:#dcfce7;color:#166534}.t-Mobility{background:#dbeafe;color:#1e40af}
 .t-Equity{background:#fee2e2;color:#991b1b}.t-UrbanDesign{background:#ede9fe;color:#5b21b6}.t-Aging{background:#fef3c7;color:#92400e}
-.pc-title{font-family:'Cormorant Garamond',serif;font-size:1.28rem;font-weight:600;line-height:1.3}
+.pc-title{font-family:var(--tp-heading-font);font-size:var(--tp-item-title-size);font-weight:var(--tp-item-title-weight);line-height:1.3}
 .pc-desc{margin:10px 0 18px;font-size:.82rem;color:var(--muted);line-height:1.65;white-space:pre-line}
 .pc-body{padding:0 24px 18px}
 .team-lbl{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
@@ -206,7 +221,7 @@ nav{
 .cat-Conference{background:#ffe4e6;color:#9f1239}.cat-Workshop{background:#f0fdf4;color:#15803d}
 .cat-Grant{background:#fffbeb;color:#b45309}.cat-Media{background:#f0f9ff;color:#0369a1}
 .news-date{font-size:.78rem;color:var(--muted)}
-.news-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;margin-bottom:10px}
+.news-title{font-family:var(--tp-heading-font);font-size:var(--tp-item-title-size);font-weight:var(--tp-item-title-weight);margin-bottom:10px}
 .news-body{font-size:.86rem;color:var(--muted);line-height:1.7;white-space:pre-line}
 .news-author{font-size:.76rem;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
 /* Lightbox */
@@ -304,7 +319,7 @@ nav{
 /* ═══════════════════════════ ABOUT ═══════════════════════════ */
 .about-hero{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:48px;margin-bottom:32px;position:relative}
 .about-tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--green-l);font-weight:600;margin-bottom:14px}
-.about-tagline{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--green);line-height:1.3;margin-bottom:18px}
+.about-tagline{font-family:var(--tp-heading-font);font-size:var(--tp-tagline-size);font-weight:var(--tp-tagline-weight);color:var(--tp-tagline-color);line-height:1.3;margin-bottom:18px}
 .about-desc{font-size:.92rem;line-height:1.8;color:var(--text);margin-bottom:16px;white-space:pre-line}
 .about-mission{font-size:.88rem;line-height:1.75;color:var(--muted);border-left:3px solid var(--gold);padding-left:18px;white-space:pre-line}
 .about-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px}
@@ -641,6 +656,7 @@ const FIREBASE_CONFIG = {
     <div class="save-indicator" id="saveIndicator">✓ Saved</div>
     <button id="heroNavToggle" onclick="toggleHeroSection()" class="admin-btn" style="display:none" title="Show/Hide hero banner">👁 Hero</button>
     <button id="themeBtn" onclick="openThemePicker()" class="admin-btn" style="display:none">🎨</button>
+    <button id="typoBtn" onclick="openTypoPicker()" class="admin-btn" style="display:none">Aa</button>
     <button id="changelogBtn" onclick="openChangelog()" class="admin-btn" style="display:none">📋 Log</button>
     <button id="navMgrBtn" onclick="openNavManager()" class="admin-btn" style="display:none">⚙ Tabs</button>
     <button class="admin-btn" id="adminBtn" onclick="adminToggle()">
@@ -1216,6 +1232,39 @@ const FIREBASE_CONFIG = {
       <button class="add-btn" onclick="addDept()">+ Add</button>
     </div>
     <div class="factions"><button class="btn-cancel" onclick="closeModal('deptManagerModal')">Done</button></div>
+  </div>
+</div>
+
+<!-- Typography Picker -->
+<div class="overlay" id="typoModal" onclick="if(event.target===this)closeModal('typoModal')">
+  <div class="modal" style="max-width:580px;max-height:88vh;overflow-y:auto">
+    <button class="modal-x" onclick="closeModal('typoModal')">×</button>
+    <h3>Aa Typography</h3>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:18px">Adjust font sizes, colors, and weights. Changes preview live.</p>
+
+    <!-- Heading Font Family -->
+    <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:20px">
+      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Heading Font Family</div>
+      <div style="display:flex;gap:10px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:9px;border:2px solid var(--border);background:var(--white);flex:1;transition:all .15s" id="tp-font-serif-lbl">
+          <input type="radio" name="tpFont" id="tpFontSerif" value="serif" onchange="previewTypo()" style="width:16px;height:16px;accent-color:var(--green)">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">Cormorant Garamond <span style="font-size:.72rem;color:var(--muted);font-family:'DM Sans',sans-serif">Serif</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:9px;border:2px solid var(--border);background:var(--white);flex:1;transition:all .15s" id="tp-font-sans-lbl">
+          <input type="radio" name="tpFont" id="tpFontSans" value="sans" onchange="previewTypo()" style="width:16px;height:16px;accent-color:var(--green)">
+          <span style="font-family:'DM Sans',sans-serif;font-size:1rem">DM Sans <span style="font-size:.72rem;color:var(--muted)">Sans-serif</span></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Rows -->
+    <div style="display:flex;flex-direction:column;gap:14px" id="typoRows"></div>
+
+    <div class="factions" style="margin-top:20px">
+      <button class="btn-cancel" onclick="resetTypo()">↺ Reset</button>
+      <button class="btn-cancel" onclick="closeModal('typoModal')">Cancel</button>
+      <button class="btn-save" onclick="saveTypo()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -2271,6 +2320,7 @@ function adminToggle(){
     document.getElementById('navMgrBtn').style.display='none';
     document.getElementById('changelogBtn').style.display='none';
     document.getElementById('themeBtn').style.display='none';
+    document.getElementById('typoBtn').style.display='none';
     document.getElementById('heroNavToggle').style.display='none';
     renderAll();
   } else {
@@ -2297,6 +2347,7 @@ function checkPw(){
     document.getElementById('navMgrBtn').style.display='inline-flex';
     document.getElementById('changelogBtn').style.display='inline-flex';
     document.getElementById('themeBtn').style.display='inline-flex';
+    document.getElementById('typoBtn').style.display='inline-flex';
     loadSubscriberCount();
     syncNewsletterAdminVisibility();
     document.getElementById('heroNavToggle').style.display='inline-flex';
@@ -3834,6 +3885,8 @@ function renderAll(){
   applyHeroTextColor(s.textColor||'#ffffff');
   applyHeroAccentColor(s.accentColor||'#a5d4c4');
   initHeroGallery();
+  initTheme();
+  initTypo();
   renderStats(); rMembers();
   const active=document.querySelector('.page.on')?.id?.replace('page-','');
   if(active==='projects'){ initTagFilters(); rProjects(); }
@@ -5384,6 +5437,162 @@ async function resetTheme(){
 }
 function initTheme(){
   if(D&&D.theme) applyThemeColors(D.theme.primary,D.theme.accent,D.theme.bg);
+}
+
+/* ══════════════════════════════════════════════════
+   TYPOGRAPHY SYSTEM
+══════════════════════════════════════════════════ */
+const TYPO_ROWS = [
+  {id:'pageTitle', label:'Page Titles',        hint:'e.g. "Lab Members", "Research Projects"',
+   size:{var:'--tp-page-title-size',  def:'2.1', min:.8, max:4},
+   color:{var:'--tp-page-title-color',def:'#2d4a3e'},
+   weight:{var:'--tp-page-title-weight',def:'600'}},
+  {id:'pageSub',   label:'Page Subtitles',      hint:'description text below page titles',
+   size:{var:'--tp-page-sub-size',    def:'.88', min:.6, max:1.6},
+   color:{var:'--tp-page-sub-color',  def:'#6b7280'}},
+  {id:'tagline',   label:'About Tagline',       hint:'big headline on the About page',
+   size:{var:'--tp-tagline-size',     def:'2',   min:.8, max:4},
+   color:{var:'--tp-tagline-color',   def:'#2d4a3e'},
+   weight:{var:'--tp-tagline-weight', def:'600'}},
+  {id:'heroHead',  label:'Hero Headline',       hint:'"Design Research for Active Living"',
+   size:{var:'--tp-hero-size',        def:'3.4', min:1.2, max:5.5},
+   weight:{var:'--tp-hero-weight',    def:'600'}},
+  {id:'body',      label:'Body Text',           hint:'general paragraph text',
+   size:{var:'--tp-body-size',        def:'1',   min:.75, max:1.3}},
+  {id:'itemTitle', label:'Card & News Titles',  hint:'project cards, news headlines, recruiting titles',
+   size:{var:'--tp-item-title-size',  def:'1.3', min:.8, max:2.4},
+   weight:{var:'--tp-item-title-weight',def:'600'}},
+];
+
+function _tpParseSize(s){
+  // Parse something like "2.1rem" or "2.1" or ".88rem" → float
+  return parseFloat(String(s).replace('rem',''))||parseFloat(s)||1;
+}
+
+function _tpApplyVars(tp){
+  const root=document.documentElement;
+  // Heading font
+  const isSerif=(tp.headingFont||'serif')==='serif';
+  root.style.setProperty('--tp-heading-font', isSerif ? "'Cormorant Garamond',serif" : "'DM Sans',sans-serif");
+  // Each row
+  TYPO_ROWS.forEach(row=>{
+    const saved=tp[row.id]||{};
+    if(row.size)  root.style.setProperty(row.size.var,  (saved.size  ||row.size.def )+'rem');
+    if(row.color) root.style.setProperty(row.color.var, saved.color ||row.color.def);
+    if(row.weight)root.style.setProperty(row.weight.var,saved.weight||row.weight.def);
+  });
+}
+
+function initTypo(){
+  if(D&&D.typography) _tpApplyVars(D.typography);
+}
+
+function openTypoPicker(){
+  const tp=(D&&D.typography)||{};
+  // Set font radio
+  const isSerif=(tp.headingFont||'serif')==='serif';
+  document.getElementById('tpFontSerif').checked=isSerif;
+  document.getElementById('tpFontSans').checked=!isSerif;
+  _updateFontRadioStyle();
+  // Build rows
+  const container=document.getElementById('typoRows');
+  container.innerHTML=TYPO_ROWS.map(row=>{
+    const saved=tp[row.id]||{};
+    const sizeVal=_tpParseSize(saved.size||row.size.def);
+    const colorVal=saved.color||(row.color?row.color.def:'');
+    const weightVal=saved.weight||(row.weight?row.weight.def:'400');
+    return `<div style="background:var(--white);border:1px solid var(--border);border-radius:11px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-weight:600;font-size:.88rem">${row.label}</div>
+          <div style="font-size:.73rem;color:var(--muted);margin-top:1px">${row.hint}</div>
+        </div>
+        <div style="font-family:var(--tp-heading-font);font-size:${sizeVal}rem;font-weight:${weightVal};color:${colorVal||'var(--text)'};white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;opacity:.85">Aa Sample</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+        <div style="flex:1;min-width:140px">
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Size: <b id="tp-${row.id}-size-lbl">${sizeVal}rem</b></div>
+          <input type="range" id="tp-${row.id}-size" min="${row.size.min}" max="${row.size.max}" step=".05" value="${sizeVal}"
+            oninput="document.getElementById('tp-${row.id}-size-lbl').textContent=parseFloat(this.value).toFixed(2)+'rem';previewTypo()"
+            style="width:100%;accent-color:var(--green)">
+        </div>
+        ${row.color?`<div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Color</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="color" id="tp-${row.id}-color" value="${colorVal}" oninput="document.getElementById('tp-${row.id}-colorhex').value=this.value;previewTypo()" style="width:36px;height:32px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;padding:2px">
+            <input type="text" id="tp-${row.id}-colorhex" value="${colorVal}" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){document.getElementById('tp-${row.id}-color').value=this.value;previewTypo();}" style="width:72px;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:monospace;font-size:.8rem;outline:none">
+          </div>
+        </div>`:''}
+        ${row.weight?`<div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">Weight</div>
+          <select id="tp-${row.id}-weight" onchange="previewTypo()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:.83rem;outline:none;background:var(--white);color:var(--text)">
+            <option value="300" ${weightVal==='300'?'selected':''}>Light (300)</option>
+            <option value="400" ${weightVal==='400'?'selected':''}>Regular (400)</option>
+            <option value="500" ${weightVal==='500'?'selected':''}>Medium (500)</option>
+            <option value="600" ${weightVal==='600'?'selected':''}>Semibold (600)</option>
+            <option value="700" ${weightVal==='700'?'selected':''}>Bold (700)</option>
+          </select>
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  openModal('typoModal');
+}
+
+function _updateFontRadioStyle(){
+  const serifEl=document.getElementById('tp-font-serif-lbl');
+  const sansEl =document.getElementById('tp-font-sans-lbl');
+  const isSerif=document.getElementById('tpFontSerif').checked;
+  if(serifEl) serifEl.style.borderColor=isSerif?'var(--green)':'var(--border)';
+  if(sansEl)  sansEl.style.borderColor =!isSerif?'var(--green)':'var(--border)';
+}
+
+function previewTypo(){
+  _updateFontRadioStyle();
+  const root=document.documentElement;
+  const isSerif=document.getElementById('tpFontSerif').checked;
+  root.style.setProperty('--tp-heading-font', isSerif ? "'Cormorant Garamond',serif" : "'DM Sans',sans-serif");
+  TYPO_ROWS.forEach(row=>{
+    const sizeEl=document.getElementById('tp-'+row.id+'-size');
+    const colorEl=document.getElementById('tp-'+row.id+'-color');
+    const weightEl=document.getElementById('tp-'+row.id+'-weight');
+    if(sizeEl&&row.size)   root.style.setProperty(row.size.var,  parseFloat(sizeEl.value).toFixed(2)+'rem');
+    if(colorEl&&row.color) root.style.setProperty(row.color.var, colorEl.value);
+    if(weightEl&&row.weight)root.style.setProperty(row.weight.var, weightEl.value);
+  });
+}
+
+async function saveTypo(){
+  if(!D.typography) D.typography={};
+  D.typography.headingFont=document.getElementById('tpFontSerif').checked?'serif':'sans';
+  TYPO_ROWS.forEach(row=>{
+    const obj={};
+    const sizeEl=document.getElementById('tp-'+row.id+'-size');
+    const colorEl=document.getElementById('tp-'+row.id+'-color');
+    const weightEl=document.getElementById('tp-'+row.id+'-weight');
+    if(sizeEl)  obj.size=parseFloat(sizeEl.value).toFixed(2);
+    if(colorEl) obj.color=colorEl.value;
+    if(weightEl)obj.weight=weightEl.value;
+    D.typography[row.id]=obj;
+  });
+  await saveToFirebase();
+  logChange('Typography saved');
+  closeModal('typoModal');
+}
+
+async function resetTypo(){
+  if(!confirm('Reset all typography to defaults?')) return;
+  delete D.typography;
+  // Reset CSS vars to defaults
+  const root=document.documentElement;
+  root.style.setProperty('--tp-heading-font',"'Cormorant Garamond',serif");
+  TYPO_ROWS.forEach(row=>{
+    if(row.size)  root.style.setProperty(row.size.var,   row.size.def+'rem');
+    if(row.color) root.style.setProperty(row.color.var,  row.color.def);
+    if(row.weight)root.style.setProperty(row.weight.var, row.weight.def);
+  });
+  await saveToFirebase();
+  closeModal('typoModal');
 }
 
 const PAGE_TITLE_DEFAULTS={
