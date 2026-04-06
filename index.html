@@ -924,6 +924,13 @@ const FIREBASE_CONFIG = {
     <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--green);margin-bottom:16px">Upcoming Events</h3>
     <div id="calUpcoming" style="display:flex;flex-direction:column;gap:10px"></div>
   </div>
+  <div style="margin-top:36px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--muted);margin:0">Past Events</h3>
+      <button id="pastEvToggleBtn" onclick="togglePastEvents()" style="background:none;border:1.5px solid var(--border);padding:6px 14px;border-radius:8px;font-size:.8rem;cursor:pointer;color:var(--muted)">Show ▾</button>
+    </div>
+    <div id="calPast" style="display:none;flex-direction:column;gap:10px"></div>
+  </div>
 </div>
 
 <!-- PUBLICATIONS -->
@@ -1682,9 +1689,12 @@ const FIREBASE_CONFIG = {
         <option value="monthly">Monthly (same weekday)</option>
       </select>
     </div>
-    <div class="factions">
-      <button class="btn-cancel" onclick="closeModal('evFormModal')">Cancel</button>
-      <button class="btn-save" id="evSaveBtn" onclick="saveEvent()">Save Event</button>
+    <div class="factions" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <button class="btn-danger" id="evDeleteBtn" onclick="deleteEventFromForm()" style="display:none">🗑 Delete Event</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn-cancel" onclick="closeModal('evFormModal')">Cancel</button>
+        <button class="btn-save" id="evSaveBtn" onclick="saveEvent()">Save Event</button>
+      </div>
     </div>
   </div>
 </div>
@@ -4188,7 +4198,6 @@ function rCalendar(){
   // Upcoming list
   const now=new Date(); now.setHours(0,0,0,0);
   const seen=new Set();
-  // For upcoming list, use unfiltered evs but still respect hidden types
   const allEvs=getCalEvents().filter(ev=>!_calQ||ev.title.toLowerCase().includes(_calQ));
   const upcoming=allEvs.filter(ev=>{
     const key=ev.id;
@@ -4197,39 +4206,71 @@ function rCalendar(){
     return new Date(ev.date+'T00:00:00')>=now && !hiddenCalTypes.has(ev.type);
   }).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
   const upEl=document.getElementById('calUpcoming'); if(!upEl) return;
-  if(!upcoming.length){upEl.innerHTML='<div class="empty" style="padding:32px 0"><div class="empty-icon">📅</div><p>No upcoming events.</p></div>';return;}
-  upEl.innerHTML=upcoming.map(ev=>{
-    const typeObj=getEvType(ev.type);
-    const dateStr=ev.endDate&&ev.endDate>ev.date
-      ? `${MONTHS[parseInt(ev.date.slice(5,7))-1].slice(0,3)} ${parseInt(ev.date.slice(8,10))} – ${MONTHS[parseInt(ev.endDate.slice(5,7))-1].slice(0,3)} ${parseInt(ev.endDate.slice(8,10))}, ${ev.endDate.slice(0,4)}`
-      : new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    const click=ev.recId
-      ? (isAdmin ? `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')` : `gotoRecDeadline(${ev.recId})`)
-      : `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')`;
-    return `
-    <div style="display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 18px;cursor:pointer;transition:box-shadow .2s" onclick="${click}" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'" onmouseout="this.style.boxShadow=''">
-      <div style="text-align:center;min-width:48px">
-        <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase">${MONTHS[parseInt(ev.date.slice(5,7))-1].slice(0,3)}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--green);line-height:1">${parseInt(ev.date.slice(8,10))}</div>
-      </div>
-      <div style="width:3px;height:36px;border-radius:2px;background:${typeObj.color}"></div>
-      <div style="flex:1">
-        <div style="font-weight:500;font-size:.9rem">${ev.title}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${typeObj.label} · ${dateStr}${ev.time?' · '+ev.time:''}</div>
-        ${ev.building||ev.room?`<div style="font-size:.73rem;color:var(--muted);margin-top:2px">📍 ${[ev.building,ev.room].filter(Boolean).join(' · ')}</div>`:''}
-        ${ev.recId&&!isAdmin?'<div style="font-size:.72rem;color:var(--green-l);margin-top:2px">→ View in Recruiting</div>':''}
-      </div>
-      ${isAdmin?(ev.recId
-        ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openRecForm(${ev.recId})" title="Edit Recruiting">✏️</button></div>`
-        :ev.newsId
-          ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openNewsForm(${ev.newsId})" title="Edit News">✏️</button></div>`
-          :`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${ev.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();confirmDelete('event','${ev.id}')">🗑</button></div>`
-      ):''}
-    </div>`;
-  }).join('');
+  if(!upcoming.length){upEl.innerHTML='<div class="empty" style="padding:32px 0"><div class="empty-icon">📅</div><p>No upcoming events.</p></div>';}
+  else { upEl.innerHTML=upcoming.map(ev=>renderEventRow(ev)).join(''); }
+
+  // Past events list
+  const seen2=new Set();
+  const past=allEvs.filter(ev=>{
+    const key=ev.id;
+    if(seen2.has(key)) return false;
+    seen2.add(key);
+    return new Date(ev.date+'T00:00:00')<now && !hiddenCalTypes.has(ev.type);
+  }).sort((a,b)=>b.date.localeCompare(a.date)); // newest-past first
+  const pastEl=document.getElementById('calPast'); if(!pastEl) return;
+  if(!past.length){ pastEl.innerHTML='<div class="empty" style="padding:24px 0"><div class="empty-icon">🗓</div><p>No past events.</p></div>'; }
+  else { pastEl.innerHTML=past.map(ev=>renderEventRow(ev,true)).join(''); }
 }
 
-function gotoRecDeadline(recId){
+function renderEventRow(ev, isPast=false){
+  const typeObj=getEvType(ev.type);
+  const dateStr=ev.endDate&&ev.endDate>ev.date
+    ? `${MONTHS[parseInt(ev.date.slice(5,7))-1].slice(0,3)} ${parseInt(ev.date.slice(8,10))} – ${MONTHS[parseInt(ev.endDate.slice(5,7))-1].slice(0,3)} ${parseInt(ev.endDate.slice(8,10))}, ${ev.endDate.slice(0,4)}`
+    : new Date(ev.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const click=ev.recId
+    ? (isAdmin ? `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')` : `gotoRecDeadline(${ev.recId})`)
+    : `openEventDetail('${encodeURIComponent(JSON.stringify(ev))}')`;
+  const dimStyle=isPast?'opacity:.6':'';
+  return `
+  <div style="display:flex;align-items:center;gap:14px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 18px;cursor:pointer;transition:box-shadow .2s;${dimStyle}" onclick="${click}" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.opacity='1'" onmouseout="this.style.boxShadow='';this.style.opacity='${isPast?0.6:1}'">
+    <div style="text-align:center;min-width:48px">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase">${MONTHS[parseInt(ev.date.slice(5,7))-1].slice(0,3)}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:${isPast?'var(--muted)':'var(--green)'};line-height:1">${parseInt(ev.date.slice(8,10))}</div>
+      ${isPast?`<div style="font-size:.64rem;color:var(--muted)">${ev.date.slice(0,4)}</div>`:''}
+    </div>
+    <div style="width:3px;height:36px;border-radius:2px;background:${isPast?'#ccc':typeObj.color}"></div>
+    <div style="flex:1">
+      <div style="font-weight:500;font-size:.9rem">${ev.title}</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${typeObj.label} · ${dateStr}${ev.time?' · '+ev.time:''}</div>
+      ${ev.building||ev.room?`<div style="font-size:.73rem;color:var(--muted);margin-top:2px">📍 ${[ev.building,ev.room].filter(Boolean).join(' · ')}</div>`:''}
+      ${ev.recId&&!isAdmin?'<div style="font-size:.72rem;color:var(--green-l);margin-top:2px">→ View in Recruiting</div>':''}
+    </div>
+    ${isAdmin?(ev.recId
+      ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openRecForm(${ev.recId})" title="Edit Recruiting">✏️</button></div>`
+      :ev.newsId
+        ?`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openNewsForm(${ev.newsId})" title="Edit News">✏️</button></div>`
+        :`<div style="display:flex;gap:4px"><button class="ica ica-edit" onclick="event.stopPropagation();openEventForm('${ev.id}')">✏️</button><button class="ica ica-del" onclick="event.stopPropagation();deleteEventDirect('${ev.id}')">🗑</button></div>`
+    ):''}
+  </div>`;
+}
+
+let _pastEvVisible=false;
+function togglePastEvents(){
+  _pastEvVisible=!_pastEvVisible;
+  const el=document.getElementById('calPast');
+  const btn=document.getElementById('pastEvToggleBtn');
+  if(el) el.style.display=_pastEvVisible?'flex':'none';
+  if(btn) btn.textContent=_pastEvVisible?'Hide ▴':'Show ▾';
+}
+
+async function deleteEventDirect(id){
+  if(!confirm('Delete this event?')) return;
+  D.events=(D.events||[]).filter(e=>e.id!==id&&e.parentId!==id);
+  await saveToFirebase();
+  rCalendar();
+}
+
+
   // Navigate to Recruiting page and highlight the position
   const btn=document.querySelector('.nbtn[onclick*="recruiting"]');
   goto('recruiting',btn);
@@ -4377,6 +4418,7 @@ function openEventDetail(evEncoded){
 
 function openEventForm(id=null){
   populateEvTypeSelect();
+  const delBtn=document.getElementById('evDeleteBtn');
   document.getElementById('evFormTitle').textContent=id?'Edit Event':'Add Event';
   if(id&&typeof id==='string'&&id!=='null'){
     const ev=(D.events||[]).find(e=>e.id===id);
@@ -4395,17 +4437,28 @@ function openEventForm(id=null){
       document.getElementById('evAddress').value=ev.address||'';
       document.getElementById('evMapsUrl').value=ev.mapsUrl||'';
       document.getElementById('evRecur').value=ev.recur||'none';
+      if(delBtn) delBtn.style.display='inline-block';
     }
   } else {
     ['evId','evTitle','evTime','evTimeEnd','evDesc','evLink','evEndDate','evBuilding','evRoom','evAddress','evMapsUrl'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('evDate').value=new Date().toISOString().slice(0,10);
     document.getElementById('evRecur').value='none';
     if(document.getElementById('evType').options.length) document.getElementById('evType').selectedIndex=0;
+    if(delBtn) delBtn.style.display='none';
   }
   openModal('evFormModal');
 }
 
-async function saveEvent(){
+async function deleteEventFromForm(){
+  const id=document.getElementById('evId').value;
+  if(!id){return;}
+  if(!confirm('Delete this event? This cannot be undone.')) return;
+  D.events=(D.events||[]).filter(e=>e.id!==id&&e.parentId!==id);
+  await saveToFirebase();
+  closeModal('evFormModal');
+  rCalendar();
+  logChange('Event deleted', id);
+}
   const title=document.getElementById('evTitle').value.trim();
   const date=document.getElementById('evDate').value;
   if(!title||!date){alert('Title and Date are required.');return}
