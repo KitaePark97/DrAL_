@@ -27,6 +27,7 @@
   --admin:#059669;
   /* ── Typography variables ── */
   --tp-heading-font:'Cormorant Garamond',serif;
+  --tp-body-font:'DM Sans',sans-serif;
   --tp-page-title-size:2.1rem;
   --tp-page-title-color:#2d4a3e;
   --tp-page-title-weight:600;
@@ -43,7 +44,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:var(--tp-body-size)}
+body{font-family:var(--tp-body-font);background:var(--bg);color:var(--text);line-height:1.6;font-size:var(--tp-body-size)}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer}
 
@@ -1240,21 +1241,24 @@ const FIREBASE_CONFIG = {
   <div class="modal" style="max-width:580px;max-height:88vh;overflow-y:auto">
     <button class="modal-x" onclick="closeModal('typoModal')">×</button>
     <h3>Aa Typography</h3>
-    <p style="font-size:.83rem;color:var(--muted);margin-bottom:18px">Adjust font sizes, colors, and weights. Changes preview live.</p>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:18px">폰트, 크기, 색상, 굵기를 조절하세요. 변경 사항이 실시간으로 미리보기됩니다.</p>
 
-    <!-- Heading Font Family -->
-    <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:20px">
-      <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px">Heading Font Family</div>
-      <div style="display:flex;gap:10px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:9px;border:2px solid var(--border);background:var(--white);flex:1;transition:all .15s" id="tp-font-serif-lbl">
-          <input type="radio" name="tpFont" id="tpFontSerif" value="serif" onchange="previewTypo()" style="width:16px;height:16px;accent-color:var(--green)">
-          <span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem">Cormorant Garamond <span style="font-size:.72rem;color:var(--muted);font-family:'DM Sans',sans-serif">Serif</span></span>
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:9px;border:2px solid var(--border);background:var(--white);flex:1;transition:all .15s" id="tp-font-sans-lbl">
-          <input type="radio" name="tpFont" id="tpFontSans" value="sans" onchange="previewTypo()" style="width:16px;height:16px;accent-color:var(--green)">
-          <span style="font-family:'DM Sans',sans-serif;font-size:1rem">DM Sans <span style="font-size:.72rem;color:var(--muted)">Sans-serif</span></span>
-        </label>
+    <!-- Heading Font -->
+    <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Heading Font</div>
+        <div style="font-size:.72rem;color:var(--muted)">제목, Tagline, 카드 타이틀</div>
       </div>
+      <div id="tp-heading-font-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"></div>
+    </div>
+
+    <!-- Body Font -->
+    <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Body Font</div>
+        <div style="font-size:.72rem;color:var(--muted)">본문, 버튼, UI 전반</div>
+      </div>
+      <div id="tp-body-font-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"></div>
     </div>
 
     <!-- Rows -->
@@ -5442,6 +5446,39 @@ function initTheme(){
 /* ══════════════════════════════════════════════════
    TYPOGRAPHY SYSTEM
 ══════════════════════════════════════════════════ */
+const FONT_CATALOG = [
+  // ── Serif ──
+  {id:'cormorant',   name:'Cormorant',      full:'Cormorant Garamond', css:"'Cormorant Garamond',serif",  cat:'serif', url:null},
+  {id:'playfair',    name:'Playfair',       full:'Playfair Display',   css:"'Playfair Display',serif",    cat:'serif', url:'Playfair+Display:ital,wght@0,400;0,600;0,700;1,400'},
+  {id:'lora',        name:'Lora',           full:'Lora',               css:"'Lora',serif",                cat:'serif', url:'Lora:ital,wght@0,400;0,500;0,600;1,400'},
+  {id:'eb-garamond', name:'EB Garamond',    full:'EB Garamond',        css:"'EB Garamond',serif",         cat:'serif', url:'EB+Garamond:ital,wght@0,400;0,600;1,400'},
+  {id:'merriweather',name:'Merriweather',   full:'Merriweather',       css:"'Merriweather',serif",        cat:'serif', url:'Merriweather:ital,wght@0,300;0,400;0,700;1,300'},
+  {id:'libre-baskerville',name:'Baskerville',full:'Libre Baskerville', css:"'Libre Baskerville',serif",   cat:'serif', url:'Libre+Baskerville:ital,wght@0,400;0,700;1,400'},
+  // ── Sans-serif ──
+  {id:'dm-sans',     name:'DM Sans',        full:'DM Sans',            css:"'DM Sans',sans-serif",        cat:'sans',  url:null},
+  {id:'inter',       name:'Inter',          full:'Inter',              css:"'Inter',sans-serif",          cat:'sans',  url:'Inter:wght@300;400;500;600;700'},
+  {id:'outfit',      name:'Outfit',         full:'Outfit',             css:"'Outfit',sans-serif",         cat:'sans',  url:'Outfit:wght@300;400;500;600;700'},
+  {id:'poppins',     name:'Poppins',        full:'Poppins',            css:"'Poppins',sans-serif",        cat:'sans',  url:'Poppins:wght@300;400;500;600;700'},
+  {id:'nunito',      name:'Nunito',         full:'Nunito',             css:"'Nunito',sans-serif",         cat:'sans',  url:'Nunito:wght@300;400;500;600;700'},
+  {id:'montserrat',  name:'Montserrat',     full:'Montserrat',         css:"'Montserrat',sans-serif",     cat:'sans',  url:'Montserrat:wght@300;400;500;600;700'},
+  {id:'raleway',     name:'Raleway',        full:'Raleway',            css:"'Raleway',sans-serif",        cat:'sans',  url:'Raleway:wght@300;400;500;600;700'},
+  {id:'josefin',     name:'Josefin Sans',   full:'Josefin Sans',       css:"'Josefin Sans',sans-serif",   cat:'sans',  url:'Josefin+Sans:wght@300;400;500;600;700'},
+  {id:'rubik',       name:'Rubik',          full:'Rubik',              css:"'Rubik',sans-serif",          cat:'sans',  url:'Rubik:wght@300;400;500;600;700'},
+  {id:'manrope',     name:'Manrope',        full:'Manrope',            css:"'Manrope',sans-serif",        cat:'sans',  url:'Manrope:wght@300;400;500;600;700'},
+];
+const _loadedFonts = new Set(['cormorant','dm-sans']);
+
+function _ensureFontLoaded(fontId){
+  if(!fontId||_loadedFonts.has(fontId)) return;
+  const f=FONT_CATALOG.find(x=>x.id===fontId);
+  if(!f||!f.url) return;
+  const link=document.createElement('link');
+  link.rel='stylesheet';
+  link.href=`https://fonts.googleapis.com/css2?family=${f.url}&display=swap`;
+  document.head.appendChild(link);
+  _loadedFonts.add(fontId);
+}
+
 const TYPO_ROWS = [
   {id:'pageTitle', label:'Page Titles',        hint:'e.g. "Lab Members", "Research Projects"',
    size:{var:'--tp-page-title-size',  def:'2.1', min:.8, max:4},
@@ -5464,17 +5501,16 @@ const TYPO_ROWS = [
    weight:{var:'--tp-item-title-weight',def:'600'}},
 ];
 
-function _tpParseSize(s){
-  // Parse something like "2.1rem" or "2.1" or ".88rem" → float
-  return parseFloat(String(s).replace('rem',''))||parseFloat(s)||1;
-}
-
 function _tpApplyVars(tp){
   const root=document.documentElement;
-  // Heading font
-  const isSerif=(tp.headingFont||'serif')==='serif';
-  root.style.setProperty('--tp-heading-font', isSerif ? "'Cormorant Garamond',serif" : "'DM Sans',sans-serif");
-  // Each row
+  const hfId=tp.headingFontId||'cormorant';
+  const bfId=tp.bodyFontId||'dm-sans';
+  _ensureFontLoaded(hfId);
+  _ensureFontLoaded(bfId);
+  const hf=FONT_CATALOG.find(x=>x.id===hfId)||FONT_CATALOG[0];
+  const bf=FONT_CATALOG.find(x=>x.id===bfId)||FONT_CATALOG[6];
+  root.style.setProperty('--tp-heading-font', hf.css);
+  root.style.setProperty('--tp-body-font',    bf.css);
   TYPO_ROWS.forEach(row=>{
     const saved=tp[row.id]||{};
     if(row.size)  root.style.setProperty(row.size.var,  (saved.size  ||row.size.def )+'rem');
@@ -5487,14 +5523,64 @@ function initTypo(){
   if(D&&D.typography) _tpApplyVars(D.typography);
 }
 
+let _tpSelHeading='cormorant';
+let _tpSelBody='dm-sans';
+
+function _buildFontGrid(containerId, currentId, type){
+  const serifs=FONT_CATALOG.filter(f=>f.cat==='serif');
+  const sans  =FONT_CATALOG.filter(f=>f.cat==='sans');
+  function card(f){
+    const sel=f.id===currentId;
+    return `<div onclick="selectFont('${type}','${f.id}')" id="tp-font-${type}-${f.id}"
+      style="cursor:pointer;padding:8px 6px;border-radius:9px;border:2px solid ${sel?'var(--green)':'var(--border)'};background:${sel?'var(--green-pale)':'var(--white)'};transition:all .15s;text-align:center;user-select:none"
+      onmouseover="if(!this.dataset.sel)this.style.background='var(--bg)'"
+      onmouseout="if(!this.dataset.sel)this.style.background='var(--white)'"
+      ${sel?'data-sel="1"':''}>
+      <div style="font-family:${f.css};font-size:1.25rem;font-weight:500;color:var(--text);line-height:1.2;margin-bottom:3px">Aa</div>
+      <div style="font-size:.63rem;color:var(--text);font-family:'DM Sans',sans-serif;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+      <div style="font-size:.58rem;color:var(--muted);font-family:'DM Sans',sans-serif;margin-top:1px">${f.cat==='serif'?'Serif':'Sans'}</div>
+    </div>`;
+  }
+  const el=document.getElementById(containerId); if(!el) return;
+  el.innerHTML=`
+    <div style="grid-column:1/-1;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--border);margin-bottom:2px">Serif</div>
+    ${serifs.map(card).join('')}
+    <div style="grid-column:1/-1;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--border);margin-top:6px;margin-bottom:2px">Sans-serif</div>
+    ${sans.map(card).join('')}
+  `;
+}
+
+function selectFont(type, fontId){
+  _ensureFontLoaded(fontId);
+  if(type==='heading') _tpSelHeading=fontId;
+  else _tpSelBody=fontId;
+  // Update grid cards
+  FONT_CATALOG.forEach(f=>{
+    const el=document.getElementById(`tp-font-${type}-${f.id}`); if(!el) return;
+    const sel=f.id===fontId;
+    el.style.borderColor=sel?'var(--green)':'var(--border)';
+    el.style.background =sel?'var(--green-pale)':'var(--white)';
+    if(sel) el.dataset.sel='1'; else delete el.dataset.sel;
+  });
+  // Live preview
+  const root=document.documentElement;
+  const f=FONT_CATALOG.find(x=>x.id===fontId);
+  if(!f) return;
+  if(type==='heading') root.style.setProperty('--tp-heading-font', f.css);
+  else                 root.style.setProperty('--tp-body-font',    f.css);
+}
+
 function openTypoPicker(){
   const tp=(D&&D.typography)||{};
-  // Set font radio
-  const isSerif=(tp.headingFont||'serif')==='serif';
-  document.getElementById('tpFontSerif').checked=isSerif;
-  document.getElementById('tpFontSans').checked=!isSerif;
-  _updateFontRadioStyle();
-  // Build rows
+  _tpSelHeading=tp.headingFontId||'cormorant';
+  _tpSelBody   =tp.bodyFontId   ||'dm-sans';
+  // Load current fonts
+  _ensureFontLoaded(_tpSelHeading);
+  _ensureFontLoaded(_tpSelBody);
+  // Build font grids
+  _buildFontGrid('tp-heading-font-grid', _tpSelHeading, 'heading');
+  _buildFontGrid('tp-body-font-grid',    _tpSelBody,    'body');
+  // Build size/color/weight rows
   const container=document.getElementById('typoRows');
   container.innerHTML=TYPO_ROWS.map(row=>{
     const saved=tp[row.id]||{};
@@ -5507,7 +5593,7 @@ function openTypoPicker(){
           <div style="font-weight:600;font-size:.88rem">${row.label}</div>
           <div style="font-size:.73rem;color:var(--muted);margin-top:1px">${row.hint}</div>
         </div>
-        <div style="font-family:var(--tp-heading-font);font-size:${sizeVal}rem;font-weight:${weightVal};color:${colorVal||'var(--text)'};white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;opacity:.85">Aa Sample</div>
+        <div style="font-family:var(--tp-heading-font);font-size:${sizeVal}rem;font-weight:${weightVal};color:${colorVal||'var(--text)'};white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;opacity:.85">Aa Sample</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
         <div style="flex:1;min-width:140px">
@@ -5539,39 +5625,33 @@ function openTypoPicker(){
   openModal('typoModal');
 }
 
-function _updateFontRadioStyle(){
-  const serifEl=document.getElementById('tp-font-serif-lbl');
-  const sansEl =document.getElementById('tp-font-sans-lbl');
-  const isSerif=document.getElementById('tpFontSerif').checked;
-  if(serifEl) serifEl.style.borderColor=isSerif?'var(--green)':'var(--border)';
-  if(sansEl)  sansEl.style.borderColor =!isSerif?'var(--green)':'var(--border)';
+function _tpParseSize(s){
+  return parseFloat(String(s).replace('rem',''))||parseFloat(s)||1;
 }
 
 function previewTypo(){
-  _updateFontRadioStyle();
   const root=document.documentElement;
-  const isSerif=document.getElementById('tpFontSerif').checked;
-  root.style.setProperty('--tp-heading-font', isSerif ? "'Cormorant Garamond',serif" : "'DM Sans',sans-serif");
   TYPO_ROWS.forEach(row=>{
-    const sizeEl=document.getElementById('tp-'+row.id+'-size');
-    const colorEl=document.getElementById('tp-'+row.id+'-color');
+    const sizeEl  =document.getElementById('tp-'+row.id+'-size');
+    const colorEl =document.getElementById('tp-'+row.id+'-color');
     const weightEl=document.getElementById('tp-'+row.id+'-weight');
-    if(sizeEl&&row.size)   root.style.setProperty(row.size.var,  parseFloat(sizeEl.value).toFixed(2)+'rem');
-    if(colorEl&&row.color) root.style.setProperty(row.color.var, colorEl.value);
-    if(weightEl&&row.weight)root.style.setProperty(row.weight.var, weightEl.value);
+    if(sizeEl  &&row.size)  root.style.setProperty(row.size.var,  parseFloat(sizeEl.value).toFixed(2)+'rem');
+    if(colorEl &&row.color) root.style.setProperty(row.color.var, colorEl.value);
+    if(weightEl&&row.weight)root.style.setProperty(row.weight.var,weightEl.value);
   });
 }
 
 async function saveTypo(){
   if(!D.typography) D.typography={};
-  D.typography.headingFont=document.getElementById('tpFontSerif').checked?'serif':'sans';
+  D.typography.headingFontId=_tpSelHeading;
+  D.typography.bodyFontId   =_tpSelBody;
   TYPO_ROWS.forEach(row=>{
     const obj={};
-    const sizeEl=document.getElementById('tp-'+row.id+'-size');
-    const colorEl=document.getElementById('tp-'+row.id+'-color');
+    const sizeEl  =document.getElementById('tp-'+row.id+'-size');
+    const colorEl =document.getElementById('tp-'+row.id+'-color');
     const weightEl=document.getElementById('tp-'+row.id+'-weight');
-    if(sizeEl)  obj.size=parseFloat(sizeEl.value).toFixed(2);
-    if(colorEl) obj.color=colorEl.value;
+    if(sizeEl)  obj.size  =parseFloat(sizeEl.value).toFixed(2);
+    if(colorEl) obj.color =colorEl.value;
     if(weightEl)obj.weight=weightEl.value;
     D.typography[row.id]=obj;
   });
@@ -5583,9 +5663,9 @@ async function saveTypo(){
 async function resetTypo(){
   if(!confirm('Reset all typography to defaults?')) return;
   delete D.typography;
-  // Reset CSS vars to defaults
   const root=document.documentElement;
   root.style.setProperty('--tp-heading-font',"'Cormorant Garamond',serif");
+  root.style.setProperty('--tp-body-font',   "'DM Sans',sans-serif");
   TYPO_ROWS.forEach(row=>{
     if(row.size)  root.style.setProperty(row.size.var,   row.size.def+'rem');
     if(row.color) root.style.setProperty(row.color.var,  row.color.def);
