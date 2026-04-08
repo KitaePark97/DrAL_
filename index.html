@@ -355,7 +355,7 @@ nav{
 .modal.wide{max-width:660px}
 .modal-x{position:absolute;top:16px;right:20px;background:none;border:none;font-size:1.6rem;color:var(--muted)}
 .modal-x:hover{color:var(--text)}
-.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;margin-bottom:20px}
+.modal h3{font-family:var(--tp-heading-font);font-size:1.7rem;margin-bottom:20px}
 .fg{margin-bottom:16px}
 .fg label{display:block;font-size:.77rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.88rem;color:var(--text);outline:none;transition:border-color .2s;background:var(--white)}
@@ -6910,7 +6910,11 @@ function generateNewsletter(){
   const openPositions = (D.recruiting||[]).filter(r => r.status === 'Open');
 
   // ── Build HTML email ──────────────────────────────────────────────────────
-  const green = '#2d4a3e'; const gold = '#b8873f'; const bg = '#f5f2ec';
+  const _cs = getComputedStyle(document.documentElement);
+  const green = (_cs.getPropertyValue('--green')||'#2d4a3e').trim();
+  const gold  = (_cs.getPropertyValue('--gold') ||'#b8873f').trim();
+  const bg    = (_cs.getPropertyValue('--bg')   ||'#f5f2ec').trim();
+  const headingFont = (_cs.getPropertyValue('--tp-heading-font')||"'Cormorant Garamond',serif").trim();
 
   let html = `
 <!DOCTYPE html>
@@ -6920,7 +6924,7 @@ function generateNewsletter(){
 
 <!-- Header -->
 <div style="background:${green};padding:32px 40px;text-align:center">
-  <div style="font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#fff;letter-spacing:.02em">
+  <div style="font-family:${headingFont};font-size:2rem;font-weight:700;color:#fff;letter-spacing:.02em">
     Dr<span style="color:#a5d4c4">AL</span> Lab
   </div>
   <div style="color:rgba(255,255,255,.75);font-size:.9rem;margin-top:6px">Monthly Update — ${monthLabel}</div>
