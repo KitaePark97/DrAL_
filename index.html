@@ -1520,7 +1520,7 @@ const FIREBASE_CONFIG = {
 </div>
 
 <!-- News form -->
-<div class="overlay" id="nFormModal" onclick="if(event.target===this)closeModal('nFormModal')">
+<div class="overlay" id="nFormModal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('nFormModal')">×</button>
     <h3 id="nFormTitle">Add News</h3>
@@ -1720,7 +1720,7 @@ const FIREBASE_CONFIG = {
 </div>
 
 <!-- Event form -->
-<div class="overlay ev-form-modal" id="evFormModal" onclick="if(event.target===this)closeModal('evFormModal')">
+<div class="overlay ev-form-modal" id="evFormModal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('evFormModal')">×</button>
     <h3 id="evFormTitle">Add Event</h3>
@@ -2307,10 +2307,12 @@ function gotoPage(name){
   }
 }
 
-function goto(name, btn) {
+function goto(name, btn, pushHistory=true) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('page-'+name).classList.add('on');
+  const pageEl = document.getElementById('page-'+name);
+  if(!pageEl) return;
+  pageEl.classList.add('on');
   if(btn) btn.classList.add('on');
   applyPageTitles();
   if(name==='about')    renderAbout();
@@ -2323,7 +2325,18 @@ function goto(name, btn) {
   if(name==='resources') rResources();
   if(name==='analytics') rAnalytics();
   if(name==='collab') rCollabMap();
+  // Update browser history so the back button stays within the site
+  if(pushHistory && history.state?.page !== name){
+    history.pushState({ page: name }, '', '#' + name);
+  }
 }
+
+// Handle browser back / forward button
+window.addEventListener('popstate', function(e){
+  const page = e.state?.page || 'about';
+  const btn = document.querySelector(`.nbtn[onclick*="'${page}'"]`) || document.getElementById('navBtn-'+page);
+  goto(page, btn||null, false);
+});
 
 /* ══════════════════════════════════════════════════
    ADMIN
@@ -3060,7 +3073,7 @@ function rProjects(){
   if(!list.length){g.innerHTML=`<div class="empty"><div class="empty-icon">🔬</div><p>No projects found.</p></div>`;return}
   g.innerHTML=list.map(p=>{
     const tags=(p.tags||[]).map(t=>`<span class="tag" style="${tagStyle(t)}">${t}</span>`).join('');
-    const chips=(p.memberIds||[]).map(id=>{const m=gm(id);return m?`<div class="chip"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
+    const chips=(p.memberIds||[]).map(id=>{const m=gm(id);return m?`<div class="chip" style="cursor:pointer" onclick="openMemberView(${id})" title="View ${m.name}"><div class="chip-av">${ini(m.name)}</div>${m.name.split(' ')[0]}<button class="chip-rm" onclick="removeMemberFromProj(${p.id},${id},event)">✕</button></div>`:''}).join('');
     const lnk=p.driveUrl
       ?`<a class="drive-btn" href="${p.driveUrl}" target="_blank">🔗 Link</a>`
       :(isAdmin
@@ -7130,6 +7143,8 @@ async function init(){
   try{
     await loadFromFirebase();
     renderAll();
+    // Set initial history state so back button first lands on About
+    history.replaceState({ page: 'about' }, '', location.hash || '#about');
     // Warn admin if projects appear to have been lost (empty after load)
     if(isAdmin && (!D.projects || D.projects.length === 0)) {
       console.warn('Projects array is empty after load. If projects were lost, restore from a CSV backup or browser cache.');
